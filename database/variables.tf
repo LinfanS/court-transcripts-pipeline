@@ -10,10 +10,6 @@ variable "AWS_REGION" {
   type = string
 }
 
-variable "DB_HOST" {
-  type = string
-}
-
 variable "DB_NAME" {
   type = string
 }
