@@ -52,8 +52,8 @@ CREATE TABLE lawyer (
     FOREIGN KEY (law_firm_id) REFERENCES law_firm(law_firm_id)
 );
 
-CREATE TABLE case (
-    case_id VARCHAR(50) UNIQUE NOT NULL,
+CREATE TABLE court_case (
+    court_case_id VARCHAR(50) UNIQUE NOT NULL,
     summary TEXT,
     defendant VARCHAR(50),
     claimant VARCHAR(50),
@@ -64,43 +64,43 @@ CREATE TABLE case (
     case_url VARCHAR(50),
     court_id INT,
     verdict_summary TEXT,
-    PRIMARY KEY (case_id),
+    PRIMARY KEY (court_case_id),
     FOREIGN KEY (verdict_id) REFERENCES verdict(verdict_id),
     FOREIGN KEY (court_id) REFERENCES court(court_id)
 );
 
 CREATE TABLE tag_assignment (
     tag_assignment_id INT GENERATED ALWAYS AS IDENTITY,
-    case_id VARCHAR(50),
+    court_case_id VARCHAR(50),
     tag_id INT,
     PRIMARY KEY (tag_assignment_id),
-    FOREIGN KEY (case_id) REFERENCES case(case_id),
+    FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
     FOREIGN KEY (tag_id) REFERENCES tag(tag_id)
 );
 
 CREATE TABLE judge_assignment (
     judge_assignment_id INT GENERATED ALWAYS AS IDENTITY,
-    case_id VARCHAR(50),
+    court_case_id VARCHAR(50),
     judge_id INT,
     PRIMARY KEY (judge_assignment_id),
-    FOREIGN KEY (case_id) REFERENCES case(case_id),
+    FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
     FOREIGN KEY (judge_id) REFERENCES judge(judge_id)
 );
 
 CREATE TABLE prosecuting_lawyer_assignment (
     prosecuting_lawyer_assignment_id INT GENERATED ALWAYS AS IDENTITY,
-    case_id VARCHAR(50),
+    court_case_id VARCHAR(50),
     lawyer_id INT,
     PRIMARY KEY (prosecuting_lawyer_assignment_id),
-    FOREIGN KEY (case_id) REFERENCES case(case_id),
+    FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
     FOREIGN KEY (lawyer_id) REFERENCES lawyer(lawyer_id)
 );
 
 CREATE TABLE defendant_lawyer_assignment (
     defendant_lawyer_assignment_id INT GENERATED ALWAYS AS IDENTITY,
-    case_id VARCHAR(50),
+    court_case_id VARCHAR(50),
     lawyer_id INT,
     PRIMARY KEY (defendant_lawyer_assignment_id),
-    FOREIGN KEY (case_id) REFERENCES case(case_id),
+    FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
     FOREIGN KEY (lawyer_id) REFERENCES lawyer(lawyer_id)
 );
