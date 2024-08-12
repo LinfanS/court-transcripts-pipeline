@@ -17,19 +17,21 @@ CREATE TABLE tag (
     PRIMARY KEY (tag_id)
 );
 
+-- Could seed
 CREATE TABLE judge (
     judge_id INT GENERATED ALWAYS AS IDENTITY,
     judge_name VARCHAR(50) UNIQUE NOT NULL,
     PRIMARY KEY (judge_id)
 );
 
+-- Could seed
 CREATE TABLE court (
     court_id INT GENERATED ALWAYS AS IDENTITY,
     court_name VARCHAR(50) UNIQUE NOT NULL,
     PRIMARY KEY (court_id)
 );
 
-
+-- Could seed
 CREATE TABLE verdict (
     verdict_id INT GENERATED ALWAYS AS IDENTITY,
     verdict VARCHAR(50) UNIQUE NOT NULL,
@@ -56,7 +58,7 @@ CREATE TABLE case (
     defendant VARCHAR(50),
     claimant VARCHAR(50),
     verdict_id INT,
-    title VARCHAR(50),
+    title VARCHAR(150),
     court_date DATE,
     case_number VARCHAR(50) UNIQUE NOT NULL,
     case_url VARCHAR(50),
