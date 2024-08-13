@@ -10,9 +10,6 @@ enc = tiktoken.encoding_for_model("gpt-4o-mini")
 text = get_listing_data(2)[0].get("text_raw")
 tokens = enc.encode(text)
 
-print(tokens)
-print(text)
-
 load_dotenv()
 
 
@@ -33,7 +30,7 @@ def get_summary(prompt: str, transcript: str):
 
 if __name__ == "__main__":
     load_dotenv()
-    transcript = get_listing_data(2)[0].get("text_raw")
+    transcript = get_listing_data(3)[1].get("text_raw")
     user_message = prompts.user_message + transcript
     response = get_summary(prompts.system_message, user_message)
     output = response.choices[0].message.content
