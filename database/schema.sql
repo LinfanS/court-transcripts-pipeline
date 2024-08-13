@@ -58,7 +58,7 @@ CREATE TABLE law_firm (
 
 CREATE TABLE lawyer (
     lawyer_id INT GENERATED ALWAYS AS IDENTITY,
-    lawyer_name VARCHAR(50) UNIQUE NOT NULL,
+    lawyer_name VARCHAR(100),
     law_firm_id INT,
     PRIMARY KEY (lawyer_id),
     FOREIGN KEY (law_firm_id) REFERENCES law_firm(law_firm_id)
