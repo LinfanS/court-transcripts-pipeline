@@ -24,14 +24,12 @@ CREATE TABLE judge (
     PRIMARY KEY (judge_id)
 );
 
--- Could seed
 CREATE TABLE court (
     court_id INT GENERATED ALWAYS AS IDENTITY,
     court_name VARCHAR(50) UNIQUE NOT NULL,
     PRIMARY KEY (court_id)
 );
 
--- Could seed
 CREATE TABLE verdict (
     verdict_id INT GENERATED ALWAYS AS IDENTITY,
     verdict VARCHAR(50) UNIQUE NOT NULL,
@@ -104,3 +102,17 @@ CREATE TABLE defendant_lawyer_assignment (
     FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
     FOREIGN KEY (lawyer_id) REFERENCES lawyer(lawyer_id)
 );
+
+
+INSERT INTO court(court_name) 
+VALUES ('United Kingdom Supreme Court'), ('Privy Council'), ('Court of Appeal (Civil Division)'),
+('Court of Appeal (Criminal Division)'), ('High Court (Administrative Court)'), ('High Court (Chancery Division)'),
+('High Court (Admiralty Court)'), ('High Court (Commercial Court)'), ('High Court (Family Division)'),
+('High Court (Intellectual Property Enterprise Court)'), ('High Court (King''s / Queen''s Bench Division)'),
+('High Court (Mercantile Court)'), ('High Court (Patents Court)'), ('High Court (Senior Courts Costs Office)'),
+('High Court (Technology and Construction Court)'), ('Court of Protection'), ('Family Court');
+
+INSERT INTO verdict(verdict)
+VALUES ('Guilty'), ('Not Guilty'), ('Dismissed'), ('Acquitted'), ('Hung Jury'), ('Claimant Wins'), ('Defendant Wins'),
+('Settlement'), ('Struck Out'), ('Appeal Dismissed'), ('Appeal Allowed'), ('Other');
+
