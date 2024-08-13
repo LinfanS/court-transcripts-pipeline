@@ -2,3 +2,6 @@ beautifulsoup4
 requests
 html2text
 pylint
+openai
+python-dotenv
+tiktoken
