@@ -21,6 +21,9 @@ def get_connection() -> connection:
 
 
 def get_judge_rows(url: str) -> element:
+    """
+    Gets all table rows from tables on the url given
+    """
     whole_page = requests.get(url)
     soup = BeautifulSoup(whole_page.content, 'html.parser')
     table_contents = soup.find('div', class_="page__content [ flow ]")
@@ -29,22 +32,37 @@ def get_judge_rows(url: str) -> element:
 
 
 def get_bench_judges(url: str) -> list[tuple]:
+    """
+    Retrieves all bench judges
+    """
     return [(item.get_text(),) for index, item in enumerate(get_judge_rows(url)) if index % 2 == 1 and item.get_text() != "Name" and item.get_text()[0].isalpha()]
 
 
 def get_district_judges_magistrates(url: str) -> list[tuple]:
+    """
+    Retrieves all district judge magistrates
+    """
     return [(item.get_text(),) for index, item in enumerate(get_judge_rows(url)) if index % 3 == 0 and item.get_text() != "Judge"]
 
 
 def get_diversity_high_court_judges(url: str) -> list[tuple]:
+    """
+    Retrieves diversity and community judges or high court judges
+    """
     return [(item.get_text(),) for index, item in enumerate(get_judge_rows(url)) if index % 2 == 0 and item.get_text() != "Name" and item.get_text()[0].isalpha()]
 
 
 def get_judge_advocates(url: str) -> list[tuple]:
+    """
+    Retrieves all judge advocates
+    """
     return [(item.get_text(),) for index, item in enumerate(get_judge_rows(url)) if index % 2 == 0 and item.get_text() != "Judge"]
 
 
 def get_circuit_district_judges(url: str) -> list[tuple]:
+    """
+    Retrieves all circuit district judges
+    """
     rows = get_judge_rows(url)
     names = []
     for index, item in enumerate(rows):
@@ -57,6 +75,9 @@ def get_circuit_district_judges(url: str) -> list[tuple]:
 
 
 def gather_all_judges() -> list[tuple]:
+    """
+    Retrieves and combines all judges names
+    """
     high_court_masters = get_diversity_high_court_judges(
         "https://www.judiciary.uk/about-the-judiciary/who-are-the-judiciary/list-of-members-of-the-judiciary/hc-masters-list/")
 
@@ -85,6 +106,9 @@ def gather_all_judges() -> list[tuple]:
 
 
 def upload_judges(conn: connection, judges: list[tuple]) -> None:
+    """
+    Uploads all the judges names to the database
+    """
     query = """
             INSERT INTO judge(judge_name)
             VALUES %s
