@@ -5,24 +5,18 @@ import tiktoken
 import prompts
 from extract import get_listing_data
 
-# enc = tiktoken.encoding_for_model("gpt-4o")
+enc = tiktoken.encoding_for_model("gpt-4o-mini")
 
-# text = "Hello, world!"
-# tokens = enc.encode(text)
+text = get_listing_data(2)[0].get("text_raw")
+tokens = enc.encode(text)
 
-# print(tokens)
-# print(text)
+print(tokens)
+print(text)
 
 load_dotenv()
 
 
 client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
-
-
-# max_tokens = 1000
-summary_topic = "Court Transcript Summary"
-system_message = prompts.system_message
-
 
 def get_summary(prompt: str, transcript: str):
     completion = client.chat.completions.create(
@@ -40,6 +34,10 @@ def get_summary(prompt: str, transcript: str):
 if __name__ == "__main__":
     load_dotenv()
     transcript = get_listing_data(2)[0].get("text_raw")
-    response = get_summary(prompts.system_message, transcript)
-    print(response.choices[0].message)
+    user_message = prompts.user_message + transcript
+    response = get_summary(prompts.system_message, user_message)
+    output = response.choices[0].message.content
+    print(output)
+    with open("gpt_out.md", "w") as file:
+        file.write(output)
     print(response.usage)

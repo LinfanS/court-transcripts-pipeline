@@ -28,9 +28,12 @@ system_message = """
     "Judgment": "Approved Judgment"
     }
 
+    make sure the prompt has no \n and is not in markdown, I just want it in plain text.
+
+    another thing I will mention, sometimes the judges name has extra titles such as 
 
 """
 
 user_message = """
-    Here is the entire court transcript:
+    Here is the entire court transcript:\n
 """
