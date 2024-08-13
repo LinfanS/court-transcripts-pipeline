@@ -23,8 +23,7 @@ def get_article_data(href: str) -> tuple[str]:
 def get_listing_data(page_num: int) -> list[dict]:
     """Returns a list of dictionaries with the data for a given page number sorting by oldest"""
 
-    url = f"""https://caselaw.nationalarchives.gov.uk/judgments/
-    search?query=&judge=&party=&order=-date&page={page_num}&order=date&per_page=50"""
+    url = f"""https://caselaw.nationalarchives.gov.uk/judgments/search?query=&judge=&party=&order=-date&page={page_num}&order=date&per_page=50"""
 
     page = requests.get(url)
 

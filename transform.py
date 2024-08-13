@@ -19,30 +19,27 @@ load_dotenv()
 client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
 
 
-
 # max_tokens = 1000
 summary_topic = "Court Transcript Summary"
 system_message = prompts.system_message
 
+
 def get_summary(prompt: str, transcript: str):
     completion = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[
-        {"role": "system", "content": prompt},
-        {"role": "user", "content": transcript}
-    ],
-    temperature=0.3,
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": transcript},
+        ],
+        temperature=0.3,
     )
-    
+
     return completion
-
-prompts.generate_prompt()
-
-
 
 
 if __name__ == "__main__":
-    transcript = get_listing_data(1)[0].get('text_raw')
-    print(get_summary(prompts.system_message, transcript))
-    print(get_summary().choices[0].message)
-    print(get_summary().usage)
+    load_dotenv()
+    transcript = get_listing_data(2)[0].get("text_raw")
+    response = get_summary(prompts.system_message, transcript)
+    print(response.choices[0].message)
+    print(response.usage)
