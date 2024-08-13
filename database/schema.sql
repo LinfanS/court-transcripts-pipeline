@@ -1,11 +1,14 @@
-DROP TABLE IF EXISTS defendant_lawyer_assignment;
-DROP TABLE IF EXISTS prosecuting_lawyer_assignment;
+DROP TABLE IF EXISTS claimant_assignment;
+DROP TABLE IF EXISTS defendant_assignment;
+DROP TABLE IF EXISTS lawyer_assignment;
 DROP TABLE IF EXISTS judge_assignment;
 DROP TABLE IF EXISTS tag_assignment;
 DROP TABLE IF EXISTS court_case;
 DROP TABLE IF EXISTS lawyer;
 DROP TABLE IF EXISTS law_firm;
 DROP TABLE IF EXISTS verdict;
+DROP TABLE IF EXISTS claimant;
+DROP TABLE IF EXISTS defendant;
 DROP TABLE IF EXISTS court;
 DROP TABLE IF EXISTS judge;
 DROP TABLE IF EXISTS tag;
@@ -17,17 +20,28 @@ CREATE TABLE tag (
     PRIMARY KEY (tag_id)
 );
 
--- Could seed
 CREATE TABLE judge (
     judge_id INT GENERATED ALWAYS AS IDENTITY,
-    judge_name VARCHAR(50) UNIQUE NOT NULL,
+    judge_name VARCHAR(200) UNIQUE NOT NULL,
     PRIMARY KEY (judge_id)
 );
 
 CREATE TABLE court (
     court_id INT GENERATED ALWAYS AS IDENTITY,
-    court_name VARCHAR(50) UNIQUE NOT NULL,
+    court_name VARCHAR(100) UNIQUE NOT NULL,
     PRIMARY KEY (court_id)
+);
+
+CREATE TABLE defendant (
+    defendant_id INT GENERATED ALWAYS AS IDENTITY,
+    defendant_name VARCHAR(50) UNIQUE NOT NULL,
+    PRIMARY KEY (defendant_id)
+);
+
+CREATE TABLE claimant (
+    claimant_id INT GENERATED ALWAYS AS IDENTITY,
+    claimant_name VARCHAR(50) UNIQUE NOT NULL,
+    PRIMARY KEY (claimant_id)
 );
 
 CREATE TABLE verdict (
@@ -53,8 +67,6 @@ CREATE TABLE lawyer (
 CREATE TABLE court_case (
     court_case_id VARCHAR(50) UNIQUE NOT NULL,
     summary TEXT,
-    defendant VARCHAR(50),
-    claimant VARCHAR(50),
     verdict_id INT,
     title VARCHAR(150),
     court_date DATE,
@@ -68,39 +80,44 @@ CREATE TABLE court_case (
 );
 
 CREATE TABLE tag_assignment (
-    tag_assignment_id INT GENERATED ALWAYS AS IDENTITY,
     court_case_id VARCHAR(50),
     tag_id INT,
-    PRIMARY KEY (tag_assignment_id),
+    PRIMARY KEY (court_case_id, tag_id),
     FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
     FOREIGN KEY (tag_id) REFERENCES tag(tag_id)
 );
 
 CREATE TABLE judge_assignment (
-    judge_assignment_id INT GENERATED ALWAYS AS IDENTITY,
     court_case_id VARCHAR(50),
     judge_id INT,
-    PRIMARY KEY (judge_assignment_id),
+    PRIMARY KEY (court_case_id, judge_id),
     FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
     FOREIGN KEY (judge_id) REFERENCES judge(judge_id)
 );
 
-CREATE TABLE prosecuting_lawyer_assignment (
-    prosecuting_lawyer_assignment_id INT GENERATED ALWAYS AS IDENTITY,
+CREATE TABLE lawyer_assignment (
     court_case_id VARCHAR(50),
     lawyer_id INT,
-    PRIMARY KEY (prosecuting_lawyer_assignment_id),
+    is_defendant BOOLEAN,
+    PRIMARY KEY (court_case_id, lawyer_id),
     FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
     FOREIGN KEY (lawyer_id) REFERENCES lawyer(lawyer_id)
 );
 
-CREATE TABLE defendant_lawyer_assignment (
-    defendant_lawyer_assignment_id INT GENERATED ALWAYS AS IDENTITY,
+CREATE TABLE defendant_assignment (
     court_case_id VARCHAR(50),
-    lawyer_id INT,
-    PRIMARY KEY (defendant_lawyer_assignment_id),
+    defendant_id INT,
+    PRIMARY KEY (court_case_id, defendant_id),
     FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
-    FOREIGN KEY (lawyer_id) REFERENCES lawyer(lawyer_id)
+    FOREIGN KEY (defendant_id) REFERENCES defendant(defendant_id)
+);
+
+CREATE TABLE claimant_assignment (
+    court_case_id VARCHAR(50),
+    claimant_id INT,
+    PRIMARY KEY (court_case_id, claimant_id),
+    FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
+    FOREIGN KEY (claimant_id) REFERENCES claimant(claimant_id)
 );
 
 
