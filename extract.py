@@ -7,6 +7,7 @@ import html2text
 
 def get_article_data(href: str) -> tuple[str]:
     """Returns text contents of a single case by returning article tag contents"""
+
     base_url = "https://caselaw.nationalarchives.gov.uk"
     page = requests.get(base_url + href)
 
@@ -21,6 +22,7 @@ def get_article_data(href: str) -> tuple[str]:
 
 def get_listing_data(page_num: int) -> list[dict]:
     """Returns a list of dictionaries with the data for a given page number sorting by oldest"""
+
     url = f"""https://caselaw.nationalarchives.gov.uk/judgments/
     search?query=&judge=&party=&order=-date&page={page_num}&order=date&per_page=50"""
 
