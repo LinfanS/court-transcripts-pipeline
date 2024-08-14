@@ -109,6 +109,9 @@ def gather_all_judges() -> list[str]:
 
 
 def standardise_judge_names(judges: list[str]) -> list[tuple]:
+    """
+    Makes the judges names just the personal name and creates a list of tuples ready for upload
+    """
     standardised_names = []
     for judge in judges:
         name_parts = judge.split(" ")
@@ -139,5 +142,6 @@ if __name__ == "__main__":
     load_dotenv()
     db_conn = get_connection()
     judges = gather_all_judges()
-    standardise_judge_names(judges)
+    print(judges)
+    print(standardise_judge_names(judges))
     upload_judges(db_conn, judges)
