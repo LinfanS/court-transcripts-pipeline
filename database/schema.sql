@@ -31,10 +31,9 @@ CREATE TABLE court (
 
 CREATE TABLE participant (
     participant_id INT GENERATED ALWAYS AS IDENTITY,
-    participant_name VARCHAR(50) UNIQUE NOT NULL,
+    participant_name VARCHAR(150) UNIQUE NOT NULL,
     PRIMARY KEY (participant_id)
 );
-
 
 CREATE TABLE verdict (
     verdict_id INT GENERATED ALWAYS AS IDENTITY,
@@ -52,6 +51,7 @@ CREATE TABLE lawyer (
     lawyer_id INT GENERATED ALWAYS AS IDENTITY,
     lawyer_name VARCHAR(100),
     law_firm_id INT,
+    UNIQUE(lawyer_name, law_firm_id),
     PRIMARY KEY (lawyer_id),
     FOREIGN KEY (law_firm_id) REFERENCES law_firm(law_firm_id)
 );
@@ -87,7 +87,6 @@ CREATE TABLE judge_assignment (
     FOREIGN KEY (judge_id) REFERENCES judge(judge_id)
 );
 
-
 CREATE TABLE participant_assignment (
     court_case_id VARCHAR(50),
     participant_id INT,
@@ -98,7 +97,6 @@ CREATE TABLE participant_assignment (
     FOREIGN KEY (participant_id) REFERENCES participant(participant_id),
     FOREIGN KEY (lawyer_id) REFERENCES lawyer(lawyer_id)
 );
-
 
 
 INSERT INTO court(court_name) 

@@ -142,6 +142,6 @@ if __name__ == "__main__":
     load_dotenv()
     db_conn = get_connection()
     judges = gather_all_judges()
-    print(judges)
-    print(standardise_judge_names(judges))
+    # print(judges)
+    # print(standardise_judge_names(judges))
     # upload_judges(db_conn, judges)
