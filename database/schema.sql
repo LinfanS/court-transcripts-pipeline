@@ -105,7 +105,7 @@ INSERT INTO court(court_name)
 VALUES ('United Kingdom Supreme Court'), ('Privy Council'), ('Court of Appeal (Civil Division)'),
 ('Court of Appeal (Criminal Division)'), ('High Court (Administrative Court)'), ('High Court (Chancery Division)'),
 ('High Court (Admiralty Court)'), ('High Court (Commercial Court)'), ('High Court (Family Division)'),
-('High Court (Intellectual Property Enterprise Court)'), ('High Court (King''s / Queen''s Bench Division)'),
+('High Court (Intellectual Property Enterprise Court)'), ('High Court (King''s Bench Division)'), ('High Court (Queen''s Bench Division)'),
 ('High Court (Mercantile Court)'), ('High Court (Patents Court)'), ('High Court (Senior Courts Costs Office)'),
 ('High Court (Technology and Construction Court)'), ('Court of Protection'), ('Family Court');
 
