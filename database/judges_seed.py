@@ -144,4 +144,4 @@ if __name__ == "__main__":
     judges = gather_all_judges()
     print(judges)
     print(standardise_judge_names(judges))
-    upload_judges(db_conn, judges)
+    # upload_judges(db_conn, judges)
