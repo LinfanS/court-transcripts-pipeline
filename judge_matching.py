@@ -22,6 +22,9 @@ def get_connection() -> connection:
 
 
 def get_judges(conn: connection) -> list[str]:
+    """
+    Retrieves a list of judges from the database
+    """
 
     query = """
             SELECT judge_name FROM judge;
@@ -35,6 +38,9 @@ def get_judges(conn: connection) -> list[str]:
 
 
 def match_judge(judge: str, current_judges: list) -> tuple | None:
+    """
+    Matches the judge received from the transcript to ones from the database if possible
+    """
     match = process.extractOne(
         judge, current_judges, score_cutoff=MATCHING_PERCENT, scorer=fuzz.token_set_ratio)
     if match:
