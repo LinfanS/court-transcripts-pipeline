@@ -1,14 +1,11 @@
-DROP TABLE IF EXISTS claimant_assignment;
-DROP TABLE IF EXISTS defendant_assignment;
-DROP TABLE IF EXISTS lawyer_assignment;
+DROP TABLE IF EXISTS participant_assignment;
 DROP TABLE IF EXISTS judge_assignment;
 DROP TABLE IF EXISTS tag_assignment;
 DROP TABLE IF EXISTS court_case;
 DROP TABLE IF EXISTS lawyer;
 DROP TABLE IF EXISTS law_firm;
 DROP TABLE IF EXISTS verdict;
-DROP TABLE IF EXISTS claimant;
-DROP TABLE IF EXISTS defendant;
+DROP TABLE IF EXISTS participant;
 DROP TABLE IF EXISTS court;
 DROP TABLE IF EXISTS judge;
 DROP TABLE IF EXISTS tag;
@@ -32,17 +29,12 @@ CREATE TABLE court (
     PRIMARY KEY (court_id)
 );
 
-CREATE TABLE defendant (
-    defendant_id INT GENERATED ALWAYS AS IDENTITY,
-    defendant_name VARCHAR(50) UNIQUE NOT NULL,
-    PRIMARY KEY (defendant_id)
+CREATE TABLE participant (
+    participant_id INT GENERATED ALWAYS AS IDENTITY,
+    participant_name VARCHAR(50) UNIQUE NOT NULL,
+    PRIMARY KEY (participant_id)
 );
 
-CREATE TABLE claimant (
-    claimant_id INT GENERATED ALWAYS AS IDENTITY,
-    claimant_name VARCHAR(50) UNIQUE NOT NULL,
-    PRIMARY KEY (claimant_id)
-);
 
 CREATE TABLE verdict (
     verdict_id INT GENERATED ALWAYS AS IDENTITY,
@@ -95,30 +87,18 @@ CREATE TABLE judge_assignment (
     FOREIGN KEY (judge_id) REFERENCES judge(judge_id)
 );
 
-CREATE TABLE lawyer_assignment (
+
+CREATE TABLE participant_assignment (
     court_case_id VARCHAR(50),
+    participant_id INT,
     lawyer_id INT,
     is_defendant BOOLEAN,
-    PRIMARY KEY (court_case_id, lawyer_id),
+    PRIMARY KEY (court_case_id, participant_id),
     FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
+    FOREIGN KEY (participant_id) REFERENCES participant(participant_id),
     FOREIGN KEY (lawyer_id) REFERENCES lawyer(lawyer_id)
 );
 
-CREATE TABLE defendant_assignment (
-    court_case_id VARCHAR(50),
-    defendant_id INT,
-    PRIMARY KEY (court_case_id, defendant_id),
-    FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
-    FOREIGN KEY (defendant_id) REFERENCES defendant(defendant_id)
-);
-
-CREATE TABLE claimant_assignment (
-    court_case_id VARCHAR(50),
-    claimant_id INT,
-    PRIMARY KEY (court_case_id, claimant_id),
-    FOREIGN KEY (court_case_id) REFERENCES court_case(court_case_id),
-    FOREIGN KEY (claimant_id) REFERENCES claimant(claimant_id)
-);
 
 
 INSERT INTO court(court_name) 
