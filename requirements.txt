@@ -1,3 +1,5 @@
+python-dotenv
+psycopg2-binary
 beautifulsoup4
 requests
 html2text
