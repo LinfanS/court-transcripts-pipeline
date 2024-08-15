@@ -16,6 +16,7 @@ def main() -> None:
         for index, _ in enumerate(data):
             gpt_response.append(get_data(data, index))
         table_data = assemble_data(gpt_response)
+        print(table_data)
         conn = get_connection()
         insert_to_database(conn, table_data)
         print(f"Page {page_num} inserted to database, {count} records in total")
