@@ -39,7 +39,9 @@ def get_max_page_num(url_no_page_num: str) -> int:
     return max(page_numbers)
 
 
-def get_listing_data(url_no_page_num, page_num: int) -> list[dict]:
+def get_listing_data(
+    url_no_page_num: str, page_num: int, already_loaded=[]
+) -> list[dict]:
     """Returns a list of dictionaries with the data for a given page number sorting by oldest"""
 
     url = url_no_page_num + str(page_num)
@@ -70,16 +72,18 @@ def get_listing_data(url_no_page_num, page_num: int) -> list[dict]:
         citation = citation_tag.get_text(strip=True) if citation_tag else None
         date = date_tag.get("datetime") if date_tag else None
 
-        judgments.append(
-            {
-                "title": title,
-                "url": base_url + href,
-                "court": court,
-                "citation": citation,
-                "date": date,
-                "text_raw": get_article_data(href),
-            }
-        )
+        if citation not in already_loaded:
+            judgments.append(
+                {
+                    "title": title,
+                    "url": base_url + href,
+                    "court": court,
+                    "citation": citation,
+                    "date": date,
+                    "text_raw": get_article_data(href),
+                }
+            )
+            already_loaded.append(citation)
 
     return judgments
 
