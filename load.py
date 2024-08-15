@@ -328,6 +328,7 @@ def insert_to_database(conn: connection, transformed_data: dict) -> None:
     tags = reconstructed
 
     add_tags(conn, [(tag,) for case in tags for tag in case])
+
     tag_map = get_tag_mapping(conn)
 
     lawyer_list, law_firm_list, people_list = process_people_data(
@@ -340,9 +341,12 @@ def insert_to_database(conn: connection, transformed_data: dict) -> None:
     participant_map = get_participant_mapping(conn)
 
     court_ids = return_single_ids(court_map, transformed_data["courts"])
+    for i,verdict in enumerate(transformed_data["verdicts"]):
+        if verdict not in ('Guilty','Not Guilty','Dismissed','Acquitted', 'Hung Jury', 'Claimant Wins','Defendant Wins','Settlement','Struck Out','Appeal Dismissed','Appeal Allowed','Other'):
+            transformed_data["verdicts"][i] = 'Other'
     verdict_ids = return_single_ids(verdict_map, transformed_data["verdicts"])
     j_ids = return_multiple_ids(judges_map, updated_judge_names)
-    tag_ids = return_multiple_ids(tag_map, transformed_data["tags"])
+    tag_ids = return_multiple_ids(tag_map, tags)
     law_firm_ids = return_single_ids(law_firm_map, law_firm_list[1])
     participant_ids = return_single_ids(participant_map, people_list[1])
 
