@@ -301,7 +301,6 @@ def populate_participant_assignment(
 ):
     """Populates the participant_assignment table by linking a case id to its participant(s),
     their lawyer(s) and wether they are defending"""
-    print(all_participant_ids, all_lawyer_ids, all_person_type)
     matched = []
     for index, accusant in enumerate(all_participant_ids):
         matched.append(
