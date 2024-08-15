@@ -2,10 +2,9 @@
 
 from bs4 import BeautifulSoup
 import requests
-import html2text
 
 
-def get_article_data(href: str) -> tuple[str]:
+def get_article_data(href: str) -> str:
     """Returns text contents of a single case by returning article tag contents"""
 
     base_url = "https://caselaw.nationalarchives.gov.uk"
@@ -14,22 +13,45 @@ def get_article_data(href: str) -> tuple[str]:
     soup = BeautifulSoup(page.content, "html.parser")
     article_only = soup.article
 
-    text_md = html2text.html2text(article_only.text)
-
     text_raw = article_only.get_text()
-    return text_md, text_raw
+    return text_raw
 
 
-def get_listing_data(page_num: int) -> list[dict]:
+def get_max_page_num(url_no_page_num: str) -> int:
+    """Returns the maximum page number available for a given URL"""
+    url = url_no_page_num + "1"
+
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, "html.parser")
+    pagination = soup.find("nav", {"aria-label": "Results pagination"})
+
+    page_links = pagination.find_all("a", class_="pagination__page-link")
+
+    page_numbers = [
+        int(link.get_text(strip=True).replace("Page", "").strip())
+        for link in page_links
+        if link.get_text(strip=True).startswith("Page")
+    ]
+
+    if not page_numbers:
+        return 1
+
+    return max(page_numbers)
+
+
+def get_listing_data(url_no_page_num, page_num: int) -> list[dict]:
     """Returns a list of dictionaries with the data for a given page number sorting by oldest"""
 
-    url = f"""https://caselaw.nationalarchives.gov.uk/judgments/search?query=&judge=&party=&order=-date&page={page_num}&order=date&per_page=50"""
-
+    url = url_no_page_num + str(page_num)
+    base_url = "https://caselaw.nationalarchives.gov.uk"
     page = requests.get(url)
 
     soup = BeautifulSoup(page.content, "html.parser")
 
     ul_tag = soup.find("ul", class_="judgment-listing__list")
+
+    if not ul_tag:
+        return []
     list_items = ul_tag.find_all("li")
 
     judgments = []
@@ -51,12 +73,11 @@ def get_listing_data(page_num: int) -> list[dict]:
         judgments.append(
             {
                 "title": title,
-                "href": href,
+                "url": base_url + href,
                 "court": court,
                 "citation": citation,
                 "date": date,
-                "text_md": get_article_data(href)[0],
-                "text_raw": get_article_data(href)[1],
+                "text_raw": get_article_data(href),
             }
         )
 
@@ -64,4 +85,7 @@ def get_listing_data(page_num: int) -> list[dict]:
 
 
 if __name__ == "__main__":
-    print(get_listing_data(1))
+    url_no_page_num = """https://caselaw.nationalarchives.gov.uk/judgments/search?per_page=50&order=date&query=&from_date_0=12&from_date_1=8&from_date_2=2024&to_date_0=&to_date_1=&to_date_2=&court=uksc&court=ukpc&court=ewca%2Fciv&court=ewca%2Fcrim&court=ewhc%2Fadmin&court=ewhc%2Fadmlty&court=ewhc%2Fch&court=ewhc%2Fcomm&court=ewhc%2Ffam&court=ewhc%2Fipec&court=ewhc%2Fkb&court=ewhc%2Fmercantile&court=ewhc%2Fpat&court=ewhc%2Fscco&court=ewhc%2Ftcc&party=&judge=&page="""
+    print(get_max_page_num(url_no_page_num))
+
+    print(get_listing_data(url_no_page_num, 1))
