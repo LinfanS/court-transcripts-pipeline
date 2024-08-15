@@ -76,7 +76,7 @@ resource "aws_ecs_task_definition" "streamlit_task" {
   container_definitions    = jsonencode([
     {
       name        = "c12-court-streamlit"
-      image       = "your-streamlit-docker-image:latest"
+      image       = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c12-court-transcript-ecr:latest"
       essential   = true
       portMappings = [
         {
