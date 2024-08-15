@@ -1,46 +1,16 @@
 "Script that will take the transformed data and load it to the rds"
-import nltk
-nltk.download('wordnet')
-import datetime
 from os import environ
 from psycopg2 import connect
 from psycopg2.extras import RealDictCursor, execute_values
 from psycopg2.extensions import connection
 from dotenv import load_dotenv
+import datetime
 from judge_matching import match_judge, get_judges
-from nltk.corpus import wordnet
-from Levenshtein import jaro_winkler
 
-
-def synonym_extractor(phrase:str)-> set[str]:
-    synonyms = []
-    for syn in wordnet.synsets(phrase):
-        for l in syn.lemmas():
-            synonyms.append(l.name())
-    synonyms = set(synonyms)
-    if phrase in synonyms:
-        synonyms.remove(str(phrase))
-    return synonyms
-
-def remove_synonyms(words:list[str]) -> list[str]:
-    for word in words: #replace any synonyms
-        synonyms = synonym_extractor(word)
-        if synonyms:
-            for syn in synonyms:
-                if str(syn) in set(words):
-                    words = list(map(lambda x: x.replace(word, syn), words))
-                    #print(syn, 'has been replaced with', word, 'as found to be synonymous')
-        
-        for word2 in words: #replace any too-similar words
-            if not word == word2:
-                jw = jaro_winkler(word,word2)
-                if jw > 0.9:
-                    words = list(map(lambda x: x.replace(word, word2), words))
-                    #print(word2, 'has been replaced with', word, 'as found to have a jw >0.9')
-    return words
 
 def get_connection() -> connection:
     """Establishes a connection to the database"""
+
     return connect(
         user=environ["DB_USER"],
         password=environ["DB_PASSWORD"],
@@ -50,6 +20,7 @@ def get_connection() -> connection:
         cursor_factory=RealDictCursor,
     )
 
+
 def reset_schema(conn: connection):
     """running schema to empty/reset the tables"""
     with open("schema.sql", "r", encoding="utf-8") as file:
@@ -57,11 +28,13 @@ def reset_schema(conn: connection):
         with conn.cursor() as cur:
             cur.execute(code)
 
+
 def return_single_ids(map: dict, to_convert: tuple[str]) -> tuple[int]:
     to_return = []
     for item in to_convert:
         to_return.append(map[item])
     return tuple(to_return)
+
 
 def return_multiple_ids(map: dict, to_convert: tuple[tuple[str]]) -> tuple[tuple[int]]:
     to_return = []
@@ -72,12 +45,14 @@ def return_multiple_ids(map: dict, to_convert: tuple[tuple[str]]) -> tuple[tuple
         to_return.append(tuple(group))
     return tuple(to_return)
 
+
 def get_verdict_mapping(conn: connection) -> dict:
     """To map each verdict to its id"""
     with conn.cursor() as cur:
         cur.execute("SELECT verdict, verdict_id FROM verdict")
         rows = cur.fetchall()
     return {row["verdict"]: row["verdict_id"] for row in rows}
+
 
 def get_court_mapping(conn: connection) -> dict:
     """To map each court to its id"""
@@ -86,12 +61,14 @@ def get_court_mapping(conn: connection) -> dict:
         rows = cur.fetchall()
     return {row["court_name"]: row["court_id"] for row in rows}
 
+
 def get_judge_mapping(conn: connection) -> dict:
     """To map each judge to its id"""
     with conn.cursor() as cur:
         cur.execute("SELECT judge_name, judge_id FROM judge")
         rows = cur.fetchall()
     return {row["judge_name"]: row["judge_id"] for row in rows}
+
 
 def get_tag_mapping(conn: connection) -> dict:
     """To map each tag to its id"""
@@ -100,12 +77,14 @@ def get_tag_mapping(conn: connection) -> dict:
         rows = cur.fetchall()
     return {row["tag_name"]: row["tag_id"] for row in rows}
 
+
 def get_law_firm_mapping(conn: connection) -> dict:
     """To map each law firm to its id"""
     with conn.cursor() as cur:
         cur.execute("SELECT law_firm_name, law_firm_id FROM law_firm")
         rows = cur.fetchall()
     return {row["law_firm_name"]: row["law_firm_id"] for row in rows}
+
 
 def get_participant_mapping(conn: connection) -> dict:
     """To map each participant to its id"""
@@ -114,6 +93,7 @@ def get_participant_mapping(conn: connection) -> dict:
         rows = cur.fetchall()
     return {row["participant_name"]: row["participant_id"] for row in rows}
 
+
 def get_lawyer_mapping(conn: connection) -> dict:
     """To map each lawyer (and firm as a pair) to its id"""
     with conn.cursor() as cur:
@@ -121,11 +101,14 @@ def get_lawyer_mapping(conn: connection) -> dict:
         rows = cur.fetchall()
     return {row["lawyer_name"]: row["lawyer_id"] for row in rows}
 
+
 def add_judges(conn: connection, all_judges_list: list[tuple[str]]):
     """Adds new judges to the table judge"""
+
     matched_judges_list = [
         (match_judge(judge_name[0], get_judges(conn)),)
-        for judge_name in all_judges_list]
+        for judge_name in all_judges_list
+    ]
     query = """
     INSERT INTO judge(judge_name) VALUES %s
     ON CONFLICT DO NOTHING;
@@ -135,6 +118,7 @@ def add_judges(conn: connection, all_judges_list: list[tuple[str]]):
     conn.commit()
 
     return matched_judges_list
+
 
 def add_tags(conn: connection, all_tags_list: list[tuple[str]]):
     """Adds new tags to the tag table"""
@@ -146,6 +130,7 @@ def add_tags(conn: connection, all_tags_list: list[tuple[str]]):
         execute_values(cur, query, all_tags_list)
     conn.commit()
 
+
 def add_law_firms(conn: connection, all_firm_names: list[tuple[str]]):
     """Adds new law firm names to the law_firm table"""
     query = """
@@ -155,6 +140,7 @@ def add_law_firms(conn: connection, all_firm_names: list[tuple[str]]):
     with conn.cursor() as cur:
         execute_values(cur, query, all_firm_names)
     conn.commit()
+
 
 def add_participants(conn: connection, all_participant_names: list[tuple[str]]):
     """Adds new people names to the participants table"""
@@ -166,6 +152,7 @@ def add_participants(conn: connection, all_participant_names: list[tuple[str]]):
         execute_values(cur, query, all_participant_names)
     conn.commit()
 
+
 def add_courts(conn: connection, all_court_names: list[tuple[str]]):
     """Adds new court names to the court table"""
     query = """
@@ -175,6 +162,7 @@ def add_courts(conn: connection, all_court_names: list[tuple[str]]):
     with conn.cursor() as cur:
         execute_values(cur, query, all_court_names)
     conn.commit()
+
 
 def populate_court_case(
     conn: connection,
@@ -212,6 +200,7 @@ def populate_court_case(
         execute_values(cur, query, matched)
     conn.commit()
 
+
 def populate_judge_assignment(conn: connection, case_id: int, judges: tuple[int]):
     matched = []
     for judge in judges:
@@ -224,6 +213,7 @@ def populate_judge_assignment(conn: connection, case_id: int, judges: tuple[int]
         execute_values(cur, query, matched)
     conn.commit()
 
+
 def populate_tag_assignment(conn: connection, case_id: int, tags: tuple[int]):
     matched = []
     for tag in tags:
@@ -235,6 +225,7 @@ def populate_tag_assignment(conn: connection, case_id: int, tags: tuple[int]):
     with conn.cursor() as cur:
         execute_values(cur, query, matched)
     conn.commit()
+
 
 def populate_lawyer(conn: connection, all_lawyers: list[str], all_law_firms: list[int]):
     """Add data to the lawyer table that matches lawyers to their firm"""
@@ -249,6 +240,7 @@ def populate_lawyer(conn: connection, all_lawyers: list[str], all_law_firms: lis
         execute_values(cur, query, matched)
     conn.commit()
 
+
 def populate_participant_assignment(
     conn: connection, case_id, all_participant_ids, all_lawyer_ids, all_person_type
 ):
@@ -262,6 +254,7 @@ def populate_participant_assignment(
     with conn.cursor() as cur:
         execute_values(cur, query, matched)
     conn.commit()
+
 
 def process_people_data(people):
     lawyer_list, law_firm_list, people_list = ([], []), ([], []), ([], [])
@@ -278,6 +271,7 @@ def process_people_data(people):
                     people_list[1].append(person)
     return lawyer_list, law_firm_list, people_list
 
+
 def replace_data(
     unmatched_judges: list[tuple[str]], matched_judges: list[tuple[str]]
 ) -> list[tuple[str]]:
@@ -293,6 +287,7 @@ def replace_data(
 
     return result
 
+
 def insert_to_database(conn: connection, transformed_data: dict) -> None:
 
     verdict_map = get_verdict_mapping(conn)
@@ -307,26 +302,7 @@ def insert_to_database(conn: connection, transformed_data: dict) -> None:
 
     judges_map = get_judge_mapping(conn)
 
-    tags = transformed_data["tags"] 
-    #get all tags and replace any synonyms
-    all_tags = []
-    for case in tags:
-        for tag in case:
-            all_tags.append(tag)
-    temp_tags = remove_synonyms(all_tags)
-
-    #put back in format expected
-    reconstructed = []
-    i = 0
-    for case in tags:
-        group = []
-        for tag in case:
-            group.append(temp_tags[i])
-            i+=1
-        reconstructed.append(tuple(group))
-    
-    tags = reconstructed
-
+    tags = transformed_data["tags"]
     add_tags(conn, [(tag,) for case in tags for tag in case])
     tag_map = get_tag_mapping(conn)
 
@@ -371,6 +347,7 @@ def insert_to_database(conn: connection, transformed_data: dict) -> None:
         )
 
     return "done"
+
 
 if __name__ == "__main__":
     load_dotenv()
