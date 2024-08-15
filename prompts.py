@@ -16,7 +16,7 @@ system_message = """
     "judge": ["THE HONOURABLE MRS. JUSTICE EADY DBE, PRESIDENT"],
     "first_side": {first_side_name: {first_side_lawyer: first_side_law_firm}}, if there are multiple first_side add them as an additional dict key, there can be multiple claimants
     "second_side": {second_side_name: {second_side_lawyer: second_side_law_firm}}, if there are multiple second_side add them as an additional dict key, there can be multiple defendants
-    "verdict" : "Dismissed", this must be from this list or the word 'Other' if none of the words are a correct match [Guilty, Not Guilty, Dismissed, Acquitted, Hung Jury, Claimant Wins, Defendant Wins, Settlement, Struck Out, Appeal Allowed, Appeal Dismissed]
+    "verdict" : "Dismissed", this MUST ONLY be from this list OR the word 'Other' if none of the words are a correct match and no other words [Guilty, Not Guilty, Dismissed, Acquitted, Hung Jury, Claimant Wins, Defendant Wins, Settlement, Struck Out, Appeal Allowed, Appeal Dismissed]
     "verdict_summary":'<text>', This is an easy to understand summary around 50 words of the judgment decision and verdict.
     "summary":'<text>', This is an easy to understand summary around 100 words of what the case was about and should not be similar to the verdict summary.
     "tags":[('<text>', ...), ('Murder', 'Self-Defence'), ...], use guidelines as mentioned above
