@@ -30,6 +30,7 @@ def read_from_json(client: client) -> dict:
 
 
 def handler(event: dict, context) -> None:
+    client = get_client()
     count = 0
     log_json = read_from_json(get_client())
     log = list(log_json.values())[0]
@@ -52,8 +53,8 @@ def handler(event: dict, context) -> None:
         print(f"Page {page_num} inserted to database, {count} records in total")
         print(log)
 
-    if datetime.datetime.strptime(log_date, "%d-%m-%Y").date() < datetime.date.today():
-        log_date = datetime.date.today().strftime("%d-%m-%Y")
+    if datetime.strptime(log_date, "%d-%m-%Y").date() < date.today():
+        log_date = date.today().strftime("%d-%m-%Y")
         log = []
         json_dict = {log_date: log}
 
@@ -62,7 +63,8 @@ def handler(event: dict, context) -> None:
 
     with open(FILE_NAME, "w", encoding="utf-8") as f:
         json.dump(json_dict, f)
-    tmp_path = "/tmp/" + FILE_NAME
+    # tmp_path = "/tmp/" + FILE_NAME
+    tmp_path = FILE_NAME
     client.upload_file(tmp_path, BUCKET_NAME, FILE_NAME)
     return "Data inserted to database"
 
