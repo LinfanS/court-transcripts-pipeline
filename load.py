@@ -290,7 +290,8 @@ def populate_lawyer(
     conn.commit()
 
 
-def populate_participant_assignment(conn: connection, people_ids:list[tuple[tuple[int]]]) -> list[tuple[tuple[int]|int]]:
+def populate_participant_assignment(conn: connection, people_ids:list[tuple[tuple[int]]]
+                                    ) -> list[tuple[tuple[int]|int]]:
     """Populates the participant_assignment table by linking a case id to its participant(s),
     their lawyer(s) and wether they are defending"""
     query = """
@@ -359,10 +360,10 @@ def transform_tags(tags_to_convert: list[tuple[str]]) -> list[tuple[str]]:
         reconstructed.append(tuple(group))
     return reconstructed
 
-def people_id_in_right_format(people:list[tuple[tuple[str]|str|bool]], 
+def people_id_in_right_format(people:list[tuple[tuple[str]|str|bool]],
                               c_case_ids: list[int],
-                              part_ids: list[int], 
-                              law_ids: list[int], 
+                              part_ids: list[int],
+                              law_ids: list[int],
                               firm_ids: list[bool]) -> list[tuple[tuple[int]|int]]:
     """Copies the structure used in 'people' but returns their ids instead
         Will now be in the right format to be inserted"""
@@ -374,7 +375,7 @@ def people_id_in_right_format(people:list[tuple[tuple[str]|str|bool]],
         for side in case: #always two sides so this should always be run twice
             side_to_add = []
             group = []
-            for c, person in enumerate(side):
+            for c in range(len((side))):
                 if (c + 1) % 2 != 0: #people
                     group.append(part_ids[i])
                     i+=1
@@ -460,13 +461,14 @@ def insert_to_database(conn: connection, transformed_data: dict) -> str:
         court_ids,
         transformed_data["v_sum"],
     )
-    part_assign = people_id_in_right_format(transformed_data["people"],transformed_data["case_ids"],participant_ids, lawyer_ids, lawyer_list[0])
-    
+    part_assign = people_id_in_right_format(transformed_data["people"],
+                        transformed_data["case_ids"],participant_ids, lawyer_ids, lawyer_list[0])
+
     populate_participant_assignment(conn, part_assign)
     for i, case_id in enumerate(transformed_data["case_ids"]):
         populate_judge_assignment(conn, case_id, j_ids[i])
         populate_tag_assignment(conn, case_id, tag_ids[i])
-        
+
     return "all files have been uploaded successfully"
 
 
