@@ -123,10 +123,10 @@ def assemble_data(data_list: list[dict]):
 if __name__ == "__main__":
     load_dotenv()
     url_no_page_num = """https://caselaw.nationalarchives.gov.uk/judgments/search?to_date_0=11&to_date_1=8&to_date_2=2024&query=&court=uksc&court=ukpc&court=ewca/civ&court=ewca/crim&court=ewhc/admin&court=ewhc/admlty&court=ewhc/ch&court=ewhc/comm&court=ewhc/fam&court=ewhc/ipec&court=ewhc/kb&court=ewhc/mercantile&court=ewhc/pat&court=ewhc/scco&court=ewhc/tcc&judge=&party=&order=date&page="""
-    print(
-        shorten_text_by_tokens(
-            get_listing_data(url_no_page_num, 1)[0].get("text_raw"), 2000, 2000
-        )
-    )
-    # html_data = get_listing_data(url_no_page_num, 2)
-    # print(get_data(html_data, 3))
+    # print(
+    #     shorten_text_by_tokens(
+    #         get_listing_data(url_no_page_num, 1)[0].get("text_raw"), 2000, 2000
+    #     )
+    # )
+    html_data = get_listing_data(url_no_page_num, 2)
+    print(get_data(html_data, 3))
