@@ -42,14 +42,12 @@ def replace_synonyms(words: list[str]) -> list[str]:
             for syn in synonyms:
                 if str(syn) in set(words):
                     words = replace_word_in_list(words, word, syn)
-                    # print(syn, 'has been replaced with', word, 'as found to be synonymous')
 
         for word2 in words:  # replace any too-similar words
             if not word == word2:
                 jw = jaro_winkler(word, word2)
                 if jw > 0.9:
                     words = replace_word_in_list(words, word, word2)
-                    # print(word2, 'has been replaced with', word, 'as found to have a jw >0.9')
     return words
 
 
@@ -378,11 +376,9 @@ def people_id_in_right_format(people:list[tuple[tuple[str]|str|bool]],
             group = []
             for c, person in enumerate(side):
                 if (c + 1) % 2 != 0: #people
-                    # print('person', side[j])
                     group.append(part_ids[i])
                     i+=1
                 elif (c + 1) % 2 == 0: #lawyers
-                    # print('person', side[j])
                     group.append(law_ids[j])
                     group.append(firm_ids[j])
                     j+=1
