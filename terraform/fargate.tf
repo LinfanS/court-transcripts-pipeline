@@ -112,7 +112,7 @@ resource "aws_ecs_task_definition" "streamlit_task" {
 
 # ECS Service to run the Fargate task
 resource "aws_ecs_service" "streamlit_service" {
-  name            = "streamlit-service"
+  name            = "c12-court-dashboard-service"
   cluster         = data.aws_ecs_cluster.streamlit_cluster.id
   task_definition = aws_ecs_task_definition.streamlit_task.arn
   launch_type     = "FARGATE"
