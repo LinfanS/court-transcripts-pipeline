@@ -1,14 +1,22 @@
 import redis
+import json
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
-r.hset('user-session:123', mapping={
-    'name': 'John',
-    "surname": 'Smith',
-    "company": 'Redis',
-    "age": 29
+court_case_id = '2014-awf-CODE'
+
+case_details_json = json.dumps({
+    "judge_name": "tanweer ikram",
+    "verdict": "guilty",
+    "sigma_male": True
 })
 
-contents = r.hgetall('user-session:123')
+r.hset(f'court-case:{court_case_id}', mapping={
+    'case_details': case_details_json
+})
 
-print(contents)
+contents = r.hgetall(f'court-case:{court_case_id}')
+
+case_details = json.loads(contents['case_details'])
+
+print(case_details['judge_name'])
