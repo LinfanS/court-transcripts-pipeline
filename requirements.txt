@@ -9,4 +9,5 @@ python-dotenv
 tiktoken
 psycopg2-binary
 rapidfuzz
+nltk
 boto3
