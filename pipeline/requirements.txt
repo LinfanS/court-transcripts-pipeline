@@ -13,3 +13,5 @@ nltk
 levenshtein
 redis
 rich
+pytest
+pytest-cov

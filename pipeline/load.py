@@ -85,7 +85,7 @@ def return_single_ids(mapping: dict, to_convert: tuple[str]) -> tuple[int]:
     """Based on a dict, will convert values (=keys of the dict) to their corresponding value"""
     to_return = []
     for item in to_convert:
-        to_return.append(mapping[item])
+        to_return.append(mapping.get(item))
     return tuple(to_return)
 
 
@@ -97,7 +97,7 @@ def return_multiple_ids(
     for case in to_convert:
         group = []
         for item in case:
-            group.append(mapping[item])
+            group.append(mapping.get(item))
         to_return.append(tuple(group))
     return tuple(to_return)
 
