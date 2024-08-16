@@ -14,6 +14,10 @@ def fake_conn():
     return MagicMock()
 
 # @pytest.fixture
+# def execute_values():
+#     return MagicMock()
+
+# @pytest.fixture
 # def fake_conn():
 #     mock_conn = MagicMock()
 #     mock_cur = MagicMock()
@@ -175,10 +179,11 @@ class TestInsertions:
         fake_cur.execute_values.return_values = ()
         #add_judges(fake_conn, [('a',)])
 
-    def test_adding_tags(self, fake_conn, fake_cur):
+    def test_adding_tags(self, fake_conn, fake_cur):#, execute_values):
         fake_conn.cursor.return_value.__enter__.return_value = fake_cur
         fake_cur.execute_values.return_values = ()
-        #add_tags(fake_conn, [('a',)])
+        # add_tags(fake_conn, [('a',)])
+        # assert execute_values.call_count == 1
     
     def test_adding_law_firms(self, fake_conn, fake_cur):
         fake_conn.cursor.return_value.__enter__.return_value = fake_cur
