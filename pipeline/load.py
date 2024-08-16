@@ -164,10 +164,7 @@ def add_judges(conn: connection, all_judges_list: list[tuple[str]]) -> list[tupl
         (match_judge(judge_name[0], get_judges(conn)),)
         for judge_name in all_judges_list
     ]
-    query = """
-    INSERT INTO judge(judge_name) VALUES %s
-    ON CONFLICT DO NOTHING;
-    """
+    query = """INSERT INTO judge(judge_name) VALUES %s ON CONFLICT DO NOTHING;"""
     with conn.cursor() as cur:
         execute_values(cur, query, matched_judges_list)
     conn.commit()
@@ -176,10 +173,7 @@ def add_judges(conn: connection, all_judges_list: list[tuple[str]]) -> list[tupl
 
 def add_tags(conn: connection, all_tags_list: list[tuple[str]]):
     """Adds new tags to the tag table"""
-    query = """
-    INSERT INTO tag(tag_name) VALUES %s
-    ON CONFLICT DO NOTHING;
-    """
+    query = """INSERT INTO tag(tag_name) VALUES %s ON CONFLICT DO NOTHING;"""
     with conn.cursor() as cur:
         execute_values(cur, query, all_tags_list)
     conn.commit()
@@ -187,10 +181,7 @@ def add_tags(conn: connection, all_tags_list: list[tuple[str]]):
 
 def add_law_firms(conn: connection, all_firm_names: list[tuple[str]]):
     """Adds new law firm names to the law_firm table"""
-    query = """
-    INSERT INTO law_firm(law_firm_name) VALUES %s
-    ON CONFLICT DO NOTHING;
-    """
+    query = """INSERT INTO law_firm(law_firm_name) VALUES %s ON CONFLICT DO NOTHING;"""
     with conn.cursor() as cur:
         execute_values(cur, query, all_firm_names)
     conn.commit()
@@ -198,10 +189,7 @@ def add_law_firms(conn: connection, all_firm_names: list[tuple[str]]):
 
 def add_participants(conn: connection, all_participant_names: list[tuple[str]]):
     """Adds people's names to the participants table"""
-    query = """
-    INSERT INTO participant(participant_name) VALUES %s
-    ON CONFLICT DO NOTHING;
-    """
+    query = """INSERT INTO participant(participant_name) VALUES %s ON CONFLICT DO NOTHING;"""
     with conn.cursor() as cur:
         execute_values(cur, query, all_participant_names)
     conn.commit()
@@ -209,10 +197,7 @@ def add_participants(conn: connection, all_participant_names: list[tuple[str]]):
 
 def add_courts(conn: connection, all_court_names: list[tuple[str]]):
     """Adds new court names to the court table"""
-    query = """
-    INSERT INTO court(court_name) VALUES %s
-    ON CONFLICT DO NOTHING;
-    """
+    query = """INSERT INTO court(court_name) VALUES %s ON CONFLICT DO NOTHING;"""
     with conn.cursor() as cur:
         execute_values(cur, query, all_court_names)
     conn.commit()
@@ -247,10 +232,7 @@ def populate_court_case(
                 v_summmaries[i],
             )
         )
-    query = """
-    INSERT INTO court_case(court_case_id, summary, verdict_id, title, court_date, case_number, case_url, court_id, verdict_summary) VALUES %s
-    ON CONFLICT DO NOTHING;
-    """
+    query = """INSERT INTO court_case(court_case_id, summary, verdict_id, title, court_date, case_number, case_url, court_id, verdict_summary) VALUES %s ON CONFLICT DO NOTHING;"""
     with conn.cursor() as cur:
         execute_values(cur, query, matched)
     conn.commit()
@@ -261,10 +243,7 @@ def populate_judge_assignment(conn: connection, case_id: int, judge_id: tuple[in
     matched = []
     for judge in judge_id:
         matched.append((case_id, judge))
-    query = """
-    INSERT INTO judge_assignment(court_case_id, judge_id) VALUES %s
-    ON CONFLICT DO NOTHING;
-    """
+    query = """INSERT INTO judge_assignment(court_case_id, judge_id) VALUES %s ON CONFLICT DO NOTHING;"""
     with conn.cursor() as cur:
         execute_values(cur, query, matched)
     conn.commit()
@@ -275,10 +254,7 @@ def populate_tag_assignment(conn: connection, case_id: int, tags_ids: tuple[int]
     matched = []
     for tag in tags_ids:
         matched.append((case_id, tag))
-    query = """
-    INSERT INTO tag_assignment(court_case_id, tag_id) VALUES %s
-    ON CONFLICT DO NOTHING;
-    """
+    query = """INSERT INTO tag_assignment(court_case_id, tag_id) VALUES %s ON CONFLICT DO NOTHING;"""
     with conn.cursor() as cur:
         execute_values(cur, query, matched)
     conn.commit()
@@ -291,10 +267,7 @@ def populate_lawyer(
     matched = []
     for i, value in enumerate(all_lawyers):
         matched.append((value, all_law_firm_ids[i]))
-    query = """
-    INSERT INTO lawyer(lawyer_name, law_firm_id) VALUES %s
-    ON CONFLICT DO NOTHING;
-    """
+    query = """INSERT INTO lawyer(lawyer_name, law_firm_id) VALUES %s ON CONFLICT DO NOTHING;"""
     with conn.cursor() as cur:
         execute_values(cur, query, matched)
     conn.commit()
@@ -305,10 +278,7 @@ def populate_participant_assignment(
 ) -> list[tuple[tuple[int] | int]]:
     """Populates the participant_assignment table by linking a case id to its participant(s),
     their lawyer(s) and whether they are defending"""
-    query = """
-    INSERT INTO participant_assignment(court_case_id, participant_id, lawyer_id, is_defendant) VALUES %s
-    ON CONFLICT DO NOTHING;
-    """
+    query = """INSERT INTO participant_assignment(court_case_id, participant_id, lawyer_id, is_defendant) VALUES %s ON CONFLICT DO NOTHING;"""
     # combine into one
     to_add = []
     for case in people_ids:
