@@ -7,7 +7,7 @@ from psycopg2.extras import RealDictCursor
 from os import getenv
 from dotenv import load_dotenv
 
-# st.set_page_config(layout="wide")
+st.set_page_config(layout="wide")
 
 
 def get_connection() -> connection:
