@@ -183,10 +183,10 @@ def get_participants_and_lawyers_for_case(conn: connection, title: str, is_defen
 
 def format_participants_to_string(participants: list[dict], is_defendant: bool) -> str:
     person = "Claimant"
-    lawyer_type = "prosecuting lawyer"
+    lawyer_type = ""
     if is_defendant:
         person = "Defendant"
-        lawyer_type = "defending lawyer"
+        lawyer_type = ""
     html = ""
     current_participants = []
     for row in participants:
@@ -199,13 +199,33 @@ def format_participants_to_string(participants: list[dict], is_defendant: bool) 
         lawyer = row.get("lawyer_name")
         html += f"<div>{person}: {participant}"
         if lawyer and lawyer != 'None':
-            html += f". Represented by {lawyer_type}: {lawyer.title()}"
+            html += f".<br> Represented by {lawyer_type}: {lawyer.title()}"
         if law_firm and law_firm != 'None':
-            html += f" from {law_firm}"
+            html += f" from {law_firm} <br> <br>"
         html += "</div>"
     return html
 
-
+def display_claimants_and_defendants(selected_case):            
+    col1, col2 = st.columns([1,2])
+    with col1:
+        claimants = st.toggle("Display claimants and their Lawyers")
+    with col2:
+        defendants = st.toggle("Display defendants and their Lawyers")
+    if claimants:
+        prosecuting_participants = get_participants_and_lawyers_for_case(
+            conn, selected_case, False)
+        prosecuting_participants_html = format_participants_to_string(
+            prosecuting_participants, False)
+        st.markdown(prosecuting_participants_html,
+                    unsafe_allow_html=True)
+    if defendants:
+        defending_participants = get_participants_and_lawyers_for_case(
+            conn, selected_case, True)
+        defending_participants_html = format_participants_to_string(
+            defending_participants, True)
+        st.markdown(defending_participants_html,
+                    unsafe_allow_html=True)
+        
 def format_case_presentation(conn: connection, title: str) -> str:
     case_specific_info = get_cases_info_for_case(conn, title)
     judges = get_judges_for_case(conn, title)
@@ -220,21 +240,34 @@ def format_case_presentation(conn: connection, title: str) -> str:
             continue
         valid_tags.append(tag.lower())
         tags_str += tag.lower() + ", "
-    st.markdown(f"[Click here to see the full case]({
-                case_specific_info['case_url']})")
-
-    header = f"""
-                <h3>Case Title: {case_specific_info["title"]}</h3>
-                <h4>Case id: {case_specific_info["court_case_id"]} | Court date: {case_specific_info["court_date"]}</h4>
-                <h4>Court Name: {case_specific_info['court_name']}</h4>
-                <h4>Judge/s: {judges_str[:-2]}</h4>
-                <h4>Tags: {tags_str[:-2]}</h4>
-                <div>Summary: {case_specific_info["summary"]}</div>
-                <h4>Verdict: <span style='color: red;'>{case_specific_info["verdict"]}</span></h4>
-                <div> Verdict summary: {case_specific_info['verdict_summary']}</div>
-                <div style='margin-bottom: 50px;'></div>
-            """
-    return header
+    col1, col2, col3 = st.columns([3,3,2])
+    with col1:
+        st.markdown(f"""**Case ID:** [{case_specific_info['court_case_id']}]({
+                    case_specific_info['case_url']})""", help = "Click here to view the original file")
+    with col2:
+        st.markdown(f"**Verdict:** <span style='color: red;'><strong><u>{case_specific_info['verdict']}</u></strong>", unsafe_allow_html=True)
+    with col3:
+        st.markdown(f"**Date:** ")
+    st.markdown(f"<h3><span style='color:white'><u>{case_specific_info["title"]}</u></span></h3>", unsafe_allow_html=True)
+    st.html(f"<u>Court:</u> {case_specific_info['court_name']}")
+    st.html(f"<u>Judge/s:</u> {judges_str[:-2]}")
+    st.html(f"<u>Tags:</u> {tags_str[:-2]}")
+    st.html(f"<u>Verdict summary:</u> {case_specific_info['verdict_summary']}")
+    st.html(f"<u>Summary:</u> {case_specific_info["summary"]}")
+    display_claimants_and_defendants(case_specific_info['title'])
+    
+    # header = f"""
+    #             <h3>Case Title: {case_specific_info["title"]}</h3>
+    #             <h4>Case id: {case_specific_info["court_case_id"]} | Court date: {case_specific_info["court_date"]}</h4>
+    #             <h4>Court Name: {case_specific_info['court_name']}</h4>
+    #             <h4>Judge/s: {judges_str[:-2]}</h4>
+    #             <h4>Tags: {tags_str[:-2]}</h4>
+    #             <div>Summary: {case_specific_info["summary"]}</div>
+    #             <h4>Verdict: <span style='color: red;'>{case_specific_info["verdict"]}</span></h4>
+    #             <div> Verdict summary: {case_specific_info['verdict_summary']}</div>
+    #             <div style='margin-bottom: 50px;'></div>
+    #         """
+    # return header
 
 
 def get_judge_chart_data_verdict(conn: connection):
@@ -515,22 +548,8 @@ def tabs():
         if selected_case:
             html = format_case_presentation(conn, selected_case)
             st.markdown(html, unsafe_allow_html=True)
-            claimants = st.button("Claimants with Lawyers", type="primary")
-            defendants = st.button("Defendants with Lawyers", type="primary")
-            if claimants:
-                prosecuting_participants = get_participants_and_lawyers_for_case(
-                    conn, selected_case, False)
-                prosecuting_participants_html = format_participants_to_string(
-                    prosecuting_participants, False)
-                st.markdown(prosecuting_participants_html,
-                            unsafe_allow_html=True)
-            if defendants:
-                defending_participants = get_participants_and_lawyers_for_case(
-                    conn, selected_case, True)
-                defending_participants_html = format_participants_to_string(
-                    defending_participants, True)
-                st.markdown(defending_participants_html,
-                            unsafe_allow_html=True)
+
+
 
     with insights:
         verdict_df = get_judge_chart_data_verdict(conn)
@@ -605,8 +624,7 @@ def tabs():
 
 
 def display():
-    st.title(
-        'Court Transcripts :classical_building: 	:scales:   :judge: :knife: :drop_of_blood:')
+    st.title('Court Transcripts :judge:')
     tabs()
 
 

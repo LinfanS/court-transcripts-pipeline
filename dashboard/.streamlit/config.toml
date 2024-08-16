@@ -1,6 +1,6 @@
 [theme]
-primaryColor="black"
-backgroundColor="maroon"
-secondaryBackgroundColor="brown"
-textColor="white"
-font="sans serif"
+primaryColor="white"
+backgroundColor="#1F2839"
+secondaryBackgroundColor="#101830"
+textColor="#F0DAC5"
+font="serif"
