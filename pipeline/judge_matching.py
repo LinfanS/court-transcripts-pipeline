@@ -1,8 +1,10 @@
+"""Python script to match judges names and standardise the judge names"""
+
+from os import getenv
 from rapidfuzz import process, fuzz
 import psycopg2
 from psycopg2.extensions import connection
 from psycopg2.extras import RealDictCursor
-from os import getenv
 from dotenv import load_dotenv
 
 MATCHING_PERCENT = 95
@@ -124,7 +126,7 @@ def match_judge(judge: str, current_judges: list) -> tuple | None:
 
 if __name__ == "__main__":
     load_dotenv()
-    conn = get_connection()
-    judges = get_judges(conn)
-    match = match_judge("Judge Bond", judges)
-    print(match)
+    db_conn = get_connection()
+    judges = get_judges(db_conn)
+    test_match = match_judge("Judge Bond", judges)
+    print(test_match)

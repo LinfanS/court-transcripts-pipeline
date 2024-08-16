@@ -10,3 +10,6 @@ tiktoken
 psycopg2-binary
 rapidfuzz
 nltk
+levenshtein
+redis
+rich

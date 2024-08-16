@@ -1,9 +1,11 @@
+"""Python script to seed the database with judges names"""
+
+from os import getenv
 import requests
 from bs4 import BeautifulSoup, element
 import psycopg2
 from psycopg2.extensions import connection
 from psycopg2.extras import RealDictCursor, execute_values
-from os import getenv
 from dotenv import load_dotenv
 
 COMMON_JUDGE_WORDS = (
@@ -82,7 +84,7 @@ def get_judge_rows(url: str) -> element:
     """
     Gets all table rows from tables on the url given
     """
-    whole_page = requests.get(url)
+    whole_page = requests.get(url, timeout=20)
     soup = BeautifulSoup(whole_page.content, "html.parser")
     table_contents = soup.find("div", class_="page__content [ flow ]")
     rows = table_contents.find_all("td")
@@ -226,10 +228,14 @@ def upload_judges(conn: connection, judges: list[tuple]) -> None:
         conn.commit()
 
 
-if __name__ == "__main__":
+def seed_judges() -> None:
+    """Main function to seed the database with judges names"""
     load_dotenv()
     db_conn = get_connection()
     judges = gather_all_judges()
-    # print(judges)
-    # print(standardise_judge_names(judges))
     upload_judges(db_conn, judges)
+    print("Seeded judges uploaded to database")
+
+
+if __name__ == "__main__":
+    seed_judges()
