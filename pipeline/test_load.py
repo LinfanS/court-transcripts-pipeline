@@ -96,6 +96,7 @@ class TestReturnIds:
         assert return_multiple_ids(fake_map, ((False,),)) == ((None,),)
         assert return_multiple_ids(fake_map, (('goodbye',),)) == ((None,),)
 
+
 class TestGetMapping:
 
     def test_verdict_mapping(self, fake_conn, fake_cur):
