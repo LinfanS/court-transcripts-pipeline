@@ -85,7 +85,6 @@ def upload_log_to_s3(aws_client: client) -> None:
 def handler(event: dict, context) -> None:
     """Main function to run the live pipeline on AWS Lambda"""
     nltk.data.path.append("./tmp")
-    print(nltk.data.path)
     aws_client = get_client()
     log_json = read_from_json(aws_client)
     log_date, log = extract_log_and_date(log_json)
