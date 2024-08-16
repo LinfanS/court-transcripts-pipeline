@@ -110,55 +110,6 @@ def get_listing_data(
     return judgments
 
 
-# def get_listing_data(
-#     url_no_page_num: str, page_num: int, already_loaded=None
-# ) -> list[dict]:
-#     """Returns a list of dictionaries with the data for a given page number sorting by oldest"""
-
-#     url = url_no_page_num + str(page_num)
-#     base_url = "https://caselaw.nationalarchives.gov.uk"
-#     page = requests.get(url, timeout=10)
-
-#     soup = BeautifulSoup(page.content, "html.parser")
-
-#     ul_tag = soup.find("ul", class_="judgment-listing__list")
-
-#     if not ul_tag:
-#         return []
-#     list_items = ul_tag.find_all("li")
-
-#     judgments = []
-#     if not already_loaded:
-#         already_loaded = []
-
-#     for item in list_items:
-#         title_tag = item.find("span", class_="judgment-listing__title")
-#         court_tag = item.find("span", class_="judgment-listing__court")
-#         citation_tag = item.find("span", class_="judgment-listing__neutralcitation")
-#         date_tag = item.find("time", class_="judgment-listing__date")
-
-#         title = title_tag.get_text(strip=True) if title_tag else None
-#         href = title_tag.find("a")["href"] if title_tag and title_tag.find("a") else ""
-#         court = court_tag.get_text(strip=True) if court_tag else None
-#         citation = citation_tag.get_text(strip=True) if citation_tag else None
-#         date = date_tag.get("datetime") if date_tag else None
-
-#         if citation not in already_loaded:
-
-#             html_data = {
-#                 "title": title,
-#                 "url": base_url + href,
-#                 "court": court,
-#                 "citation": citation,
-#                 "date": date,
-#                 "text_raw": get_article_data(href),
-#             }
-#             if validate_html_data(html_data):
-#                 judgments.append(html_data)
-
-#     return judgments
-
-
 if __name__ == "__main__":
     URL_NO_PAGE_NUM = """https://caselaw.nationalarchives.gov.uk/judgments/search?per_page=50&order=date&query=&from_date_0=12&from_date_1=8&from_date_2=2024&to_date_0=&to_date_1=&to_date_2=&court=uksc&court=ukpc&court=ewca%2Fciv&court=ewca%2Fcrim&court=ewhc%2Fadmin&court=ewhc%2Fadmlty&court=ewhc%2Fch&court=ewhc%2Fcomm&court=ewhc%2Ffam&court=ewhc%2Fipec&court=ewhc%2Fkb&court=ewhc%2Fmercantile&court=ewhc%2Fpat&court=ewhc%2Fscco&court=ewhc%2Ftcc&party=&judge=&page="""
     print(get_listing_data(URL_NO_PAGE_NUM, 5))
