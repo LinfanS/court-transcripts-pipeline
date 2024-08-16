@@ -1,0 +1,15 @@
+python-dotenv
+psycopg2-binary
+beautifulsoup4
+requests
+html2text
+pylint
+openai
+python-dotenv
+tiktoken
+psycopg2-binary
+rapidfuzz
+nltk
+levenshtein
+redis
+rich
