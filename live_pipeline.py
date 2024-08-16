@@ -39,6 +39,9 @@ def handler(event: dict, context) -> None:
     LIVE_URL = f"""https://caselaw.nationalarchives.gov.uk/judgments/search?per_page=50&order=date&query=&from_date_0={day}&from_date_1={month}&from_date_2={year}&to_date_0=&to_date_1=&to_date_2=&court=uksc&court=ukpc&court=ewca%2Fciv&court=ewca%2Fcrim&court=ewhc%2Fadmin&court=ewhc%2Fadmlty&court=ewhc%2Fch&court=ewhc%2Fcomm&court=ewhc%2Ffam&court=ewhc%2Fipec&court=ewhc%2Fkb&court=ewhc%2Fmercantile&court=ewhc%2Fpat&court=ewhc%2Fscco&court=ewhc%2Ftcc&party=&judge=&page="""
 
     max_page_num = get_max_page_num(LIVE_URL)
+    if max_page_num == 0:
+        return "No new data to insert, exiting"
+
     for page_num in range(1, max_page_num + 1):
         gpt_response = []
         data = get_listing_data(LIVE_URL, page_num, log)
@@ -49,9 +52,7 @@ def handler(event: dict, context) -> None:
         conn = get_connection()
         insert_to_database(conn, table_data)
         log += [d.get("citation") for d in data]
-
         print(f"Page {page_num} inserted to database, {count} records in total")
-        print(log)
 
     if datetime.strptime(log_date, "%d-%m-%Y").date() < date.today():
         log_date = date.today().strftime("%d-%m-%Y")
@@ -63,8 +64,8 @@ def handler(event: dict, context) -> None:
 
     with open(FILE_NAME, "w", encoding="utf-8") as f:
         json.dump(json_dict, f)
-    # tmp_path = "/tmp/" + FILE_NAME
-    tmp_path = FILE_NAME
+    # tmp_path = "/tmp/" + FILE_NAME # for lambda
+    tmp_path = FILE_NAME  # for local
     client.upload_file(tmp_path, BUCKET_NAME, FILE_NAME)
     return "Data inserted to database"
 

@@ -21,7 +21,7 @@ system_message = """
     "summary":'<text>', This is an easy to understand summary around 100 words of what the case was about and should not be similar to the verdict summary.
     "tags":[('<text>', ...), ('Murder', 'Self-Defence'), ...], use guidelines as mentioned above
     }
-    You must return all the data that has been asked for, if you can't find a value, use a None value instead.
+    You must return all the data that has been asked for, if you can't find a value, use a Nonetype instead.
     The returned prompt must have no newline characters \n and not in markdown, it should be in plain raw text.
 
     Sometimes the judges name has extra titles such as Deputy Senior District Judge (Chief Magistrate) Tan

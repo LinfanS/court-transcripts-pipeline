@@ -48,6 +48,31 @@ def get_summary(prompt: str, transcript: str):
     return completion
 
 
+def validate_gpt_response(data: dict) -> bool:
+    """Validates the data extracted from the GPT-4o-mini API"""
+    expected_keys = {
+        "verdict": str,
+        "summary": str,
+        "case_number": str,
+        "verdict_summary": str,
+        "judge": list,
+        "tags": list,
+        "first_side": dict,
+        "second_side": dict,
+    }
+
+    for key, expected_type in expected_keys.items():
+        value = data.get(key)
+        if value is None:
+            return False
+        if not isinstance(value, expected_type):
+            return False
+        if isinstance(value, str) and not value.strip():
+            return False
+
+    return True
+
+
 def get_data(html_data: list[dict], index: int) -> dict:
     transcript = html_data[index].get("text_raw")
     shortened_transcript = shorten_text_by_tokens(transcript)
@@ -98,24 +123,25 @@ def assemble_data(data_list: list[dict]):
     }
 
     for data in data_list:
+        if validate_gpt_response(data):
 
-        table_data["tags"].append(tuple(data.get("tags")))
-        table_data["judges"].append(tuple(data.get("judge")))
-        table_data["verdicts"].append(data.get("verdict"))
-        table_data["courts"].append(data.get("court"))
-        table_data["case_ids"].append(data.get("citation"))
-        table_data["summ"].append(data.get("summary"))
-        table_data["title"].append(data.get("title"))
-        table_data["date"].append(format_date(data.get("date")))
-        table_data["number"].append(data.get("case_number"))
-        table_data["url"].append(data.get("url"))
-        table_data["v_sum"].append(data.get("verdict_summary"))
-        table_data["people"].append(
-            (
-                convert_dict_to_tuple(data.get("first_side")),
-                convert_dict_to_tuple(data.get("second_side")),
+            table_data["tags"].append(tuple(data.get("tags")))
+            table_data["judges"].append(tuple(data.get("judge")))
+            table_data["verdicts"].append(data.get("verdict"))
+            table_data["courts"].append(data.get("court"))
+            table_data["case_ids"].append(data.get("citation"))
+            table_data["summ"].append(data.get("summary"))
+            table_data["title"].append(data.get("title"))
+            table_data["date"].append(format_date(data.get("date")))
+            table_data["number"].append(data.get("case_number"))
+            table_data["url"].append(data.get("url"))
+            table_data["v_sum"].append(data.get("verdict_summary"))
+            table_data["people"].append(
+                (
+                    convert_dict_to_tuple(data.get("first_side")),
+                    convert_dict_to_tuple(data.get("second_side")),
+                )
             )
-        )
 
     return table_data
 
