@@ -17,14 +17,18 @@ nltk.download("wordnet")
 
 def synonym_extractor(phrase: str) -> set[str]:
     """Uses the wordnet module from the nltk library to find synonyms of a word"""
+    if not isinstance(phrase, str):
+        return set()
     synonyms = []
-    for syn in wordnet.synsets(phrase):
-        for l in syn.lemmas():
-            synonyms.append(l.name())
-    synonyms = set([word.capitalize() for word in synonyms])
-    if phrase in synonyms:
-        synonyms.remove(str(phrase))
-    return synonyms
+    for word in phrase.split(" "):
+        for syn in wordnet.synsets(word):
+            for l in syn.lemmas():
+                synonyms.append(l.name())
+        synonyms = set([word.capitalize() for word in synonyms])
+        if word in synonyms:
+            synonyms.remove(str(word))
+        synonyms = list(synonyms)
+    return set(synonyms)
 
 
 def replace_word_in_list(
@@ -45,6 +49,8 @@ def replace_synonyms(words: list[str]) -> list[str]:
                     words = replace_word_in_list(words, word, syn)
 
         for word2 in words:  # replace any too-similar words
+            if not isinstance(word2, str):
+                words.remove(word2)
             if not word == word2:
                 jw = jaro_winkler(word, word2)
                 if jw > 0.9:
@@ -77,9 +83,11 @@ def reset_schema_and_seed(conn: connection):
 
 def return_single_ids(mapping: dict, to_convert: tuple[str]) -> tuple[int]:
     """Based on a dict, will convert values (=keys of the dict) to their corresponding value"""
+    if not isinstance(to_convert, tuple):
+        return tuple()
     to_return = []
     for item in to_convert:
-        to_return.append(mapping[item])
+        to_return.append(map.get(item))
     return tuple(to_return)
 
 
@@ -91,7 +99,7 @@ def return_multiple_ids(
     for case in to_convert:
         group = []
         for item in case:
-            group.append(mapping[item])
+            group.append(map.get(item))
         to_return.append(tuple(group))
     return tuple(to_return)
 
