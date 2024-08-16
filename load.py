@@ -21,7 +21,7 @@ def synonym_extractor(phrase: str) -> set[str]:
     for syn in wordnet.synsets(phrase):
         for l in syn.lemmas():
             synonyms.append(l.name())
-    synonyms = set(synonyms)
+    synonyms = set([word.capitalize() for word in synonyms])
     if phrase in synonyms:
         synonyms.remove(str(phrase))
     return synonyms
