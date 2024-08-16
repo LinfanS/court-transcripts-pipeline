@@ -13,8 +13,11 @@ COPY load.py .
 COPY prompts.py .
 COPY judge_matching.py .
 COPY judges_seed.py .
+COPY nltk_setup.py .
+
+RUN python3 nltk_setup.py
+
 
 EXPOSE 5432
-
 
 CMD ["live_pipeline.handler"]

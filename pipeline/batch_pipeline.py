@@ -4,9 +4,12 @@ court cases to the database and cache GPT data in Redis"""
 import json
 import redis
 from rich.progress import track
+import nltk
 from extract import get_listing_data, get_max_page_num
 from transform import get_data, assemble_data
 from load import get_connection, insert_to_database
+
+nltk.download("wordnet")
 
 # Initialize Redis connection
 r = redis.Redis(host="localhost", port=6379, decode_responses=True)

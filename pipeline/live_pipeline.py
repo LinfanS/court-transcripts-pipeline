@@ -8,6 +8,7 @@ from botocore import client
 from extract import get_listing_data, get_max_page_num
 from transform import get_data, assemble_data
 from load import get_connection, insert_to_database
+import nltk
 
 FILE_NAME = "log.json"
 BUCKET_NAME = "c12-court-transcripts"
@@ -25,8 +26,8 @@ def get_client() -> client:
 
 def read_from_json(aws_client: client) -> dict:
     """Retrieves record of cases already processed from json file on S3."""
-    aws_client.download_file(BUCKET_NAME, FILE_NAME, FILE_NAME)
-    with open(FILE_NAME, "r", encoding="utf-8") as f:
+    aws_client.download_file(BUCKET_NAME, FILE_NAME, "/tmp/" + FILE_NAME)
+    with open("/tmp/" + FILE_NAME, "r", encoding="utf-8") as f:
         log_json = json.load(f)
     return log_json
 
@@ -70,19 +71,21 @@ def update_log_date_and_log(log_date: str, log: list) -> tuple[str, list]:
 def save_log_to_file(log_date: str, log: list) -> None:
     """Saves the log to a json file"""
     json_dict = {log_date: log}
-    with open(FILE_NAME, "w", encoding="utf-8") as f:
+    with open("/tmp/" + FILE_NAME, "w", encoding="utf-8") as f:
         json.dump(json_dict, f)
 
 
 def upload_log_to_s3(aws_client: client) -> None:
     """Uploads the log file to S3"""
-    # tmp_path = "/tmp/" + FILE_NAME  # for lambda
-    tmp_path = FILE_NAME  # for local
+    tmp_path = "/tmp/" + FILE_NAME  # for lambda
+    # tmp_path = FILE_NAME  # for local
     aws_client.upload_file(tmp_path, BUCKET_NAME, FILE_NAME)
 
 
 def handler(event: dict, context) -> None:
     """Main function to run the live pipeline on AWS Lambda"""
+    nltk.data.path.append("./tmp")
+    print(nltk.data.path)
     aws_client = get_client()
     log_json = read_from_json(aws_client)
     log_date, log = extract_log_and_date(log_json)
