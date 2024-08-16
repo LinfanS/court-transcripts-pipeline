@@ -226,10 +226,13 @@ def upload_judges(conn: connection, judges: list[tuple]) -> None:
         conn.commit()
 
 
-if __name__ == "__main__":
+def seed_judges() -> None:
     load_dotenv()
     db_conn = get_connection()
     judges = gather_all_judges()
-    # print(judges)
-    # print(standardise_judge_names(judges))
     upload_judges(db_conn, judges)
+    print("Seeded judges uploaded to database")
+
+
+if __name__ == "__main__":
+    seed_judges()
