@@ -206,7 +206,7 @@ def format_participants_to_string(participants: list[dict], is_defendant: bool) 
     return html
 
 def display_claimants_and_defendants(selected_case):            
-    col1, col2 = st.columns([1,2])
+    col1, col2 = st.columns(2)
     with col1:
         claimants = st.toggle("Display claimants and their Lawyers")
     with col2:
@@ -488,7 +488,7 @@ def plot_filter_pie(df: pd.DataFrame, selected_filter: str, filter: str, tab: st
     filtered_data = df[df[tab] == selected_filter]
     aggregated_data = filtered_data.groupby(filter).sum().reset_index()
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
-        theta=alt.Theta(field='count', type='quantitative'),
+        theta=alt.Theta(field='count:Q'),
         color=alt.Color(field=filter, type='nominal'),
         tooltip=[filter, 'count']
     ).properties(
@@ -500,7 +500,7 @@ def plot_filter_pie(df: pd.DataFrame, selected_filter: str, filter: str, tab: st
 def plot_pie(df: pd.DataFrame, filter: str):
     aggregated_data = df.groupby(filter).sum().reset_index()
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
-        theta=alt.Theta(field='count', type='quantitative'),
+        theta=alt.Theta(field='count:Q'),
         color=alt.Color(field=filter, type='nominal'),
         tooltip=[filter, 'count']
     ).properties(
@@ -512,8 +512,9 @@ def plot_pie(df: pd.DataFrame, filter: str):
 def plot_filter_pie_tags(df: pd.DataFrame, selected_filter: list[str], filter: str, tab: str):
     filtered_data = df[df[tab].isin(selected_filter)]
     aggregated_data = filtered_data.groupby(filter).sum().reset_index()
+    print(aggregated_data)
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
-        theta=alt.Theta(field='count', type='quantitative'),
+        alt.Theta('count:Q').stack(True),
         color=alt.Color(field=filter, type='nominal'),
         tooltip=[filter, 'count']
     )
@@ -522,7 +523,7 @@ def plot_filter_pie_tags(df: pd.DataFrame, selected_filter: list[str], filter: s
 
 def plot_cases_over_months(df: pd.DataFrame):
     return alt.Chart(df.reset_index()).mark_line().encode(
-        x='month',
+        x='month:T',
         y='case_count:Q').interactive()
 
 
@@ -552,16 +553,20 @@ def tabs():
 
 
     with insights:
-        verdict_df = get_judge_chart_data_verdict(conn)
-        st.write(plot_pie(verdict_df, 'verdict'))
-        tag_df = get_judge_chart_data_tag(conn)
-        st.write(plot_pie(tag_df, 'tag_name'))
-        court_df = get_judge_data_court_type(conn)
-        st.write(plot_pie(court_df, 'court_name'))
-        case_count_df = get_cases_over_time(conn)
-        st.altair_chart(plot_cases_over_months(case_count_df))
-        court_cases_over_time_df = get_cases_over_time_per_court(conn)
-        st.altair_chart(plot_cases_over_months_per_court(
+        col1, col2 = st.columns(2)
+        with col1:
+            verdict_df = get_judge_chart_data_verdict(conn)
+            st.write(plot_pie(verdict_df, 'verdict'))
+            court_df = get_judge_data_court_type(conn)
+            st.write(plot_pie(court_df, 'court_name'))
+        with col2:
+            tag_df = get_judge_chart_data_tag(conn)
+            st.write(plot_pie(tag_df, 'tag_name'))
+        
+            case_count_df = get_cases_over_time(conn)
+            st.altair_chart(plot_cases_over_months(case_count_df))
+            court_cases_over_time_df = get_cases_over_time_per_court(conn)
+            st.altair_chart(plot_cases_over_months_per_court(
             court_cases_over_time_df))
 
     with filtered_insights:
@@ -581,11 +586,12 @@ def tabs():
 
         with col2:
             if filter == "Judge":
-                selected_judge = st.selectbox("", judges)
+                selected_judge = st.selectbox("Select a judge", judges, label_visibility="hidden")
             if filter == "Court name":
-                selected_court = st.selectbox("", courts)
+                selected_court = st.selectbox("Select a court", courts, label_visibility="hidden")
             if filter == "Tag":
-                selected_tags = st.multiselect("", tags)
+                st.markdown("""<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""",unsafe_allow_html=True,)
+                selected_tags = st.multiselect("Select a tag", tags, label_visibility="hidden")
 
         if filter == "Judge":
             judge_verdict_df = get_judge_chart_data_verdict(conn)
