@@ -497,41 +497,41 @@ def plot_filter_pie(df: pd.DataFrame, selected_filter: str, filter: str, tab: st
     return pie_chart
 
 
-def plot_pie(df: pd.DataFrame, filter: str):
+def plot_pie(df: pd.DataFrame, filter: str, name:str):
     aggregated_data = df.groupby(filter).sum().reset_index()
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
-        theta=alt.Theta(field='count:Q'),
-        color=alt.Color(field=filter, type='nominal'),
-        tooltip=[filter, 'count']
+        theta=alt.Theta(field='count:Q', title='Count').stack(True),
+        color=alt.Color(field=filter, type='nominal', title = name),
+        tooltip=[filter, 'count'],
+        order=alt.Order('count', sort='descending')
     ).properties(
-        title=f"{filter.capitalize()} Distribution"
-    )
+        title=f"{name} distribution", width=400,height=400)
     return pie_chart
 
 
 def plot_filter_pie_tags(df: pd.DataFrame, selected_filter: list[str], filter: str, tab: str):
     filtered_data = df[df[tab].isin(selected_filter)]
     aggregated_data = filtered_data.groupby(filter).sum().reset_index()
-    print(aggregated_data)
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
-        alt.Theta('count:Q').stack(True),
+        alt.Theta('count:Q', title='Tag Count').stack(True),
         color=alt.Color(field=filter, type='nominal'),
-        tooltip=[filter, 'count']
+        tooltip=[filter, 'count'],
+        order=alt.Order('count', sort='descending')
     )
     return pie_chart
 
 
 def plot_cases_over_months(df: pd.DataFrame):
-    return alt.Chart(df.reset_index()).mark_line().encode(
-        x='month:T',
-        y='case_count:Q').interactive()
+    return alt.Chart(df.reset_index(), title='Case count over time').mark_line().encode(
+        x=alt.X('month:T', title='Date'),
+        y=alt.Y('case_count:Q', title='Case Count')).interactive()
 
 
 def plot_cases_over_months_per_court(df: pd.DataFrame):
     return alt.Chart(df.reset_index()).mark_line().encode(
-        x='court_date:T',
-        y='case_count:Q',
-        color='court_name:N').interactive()
+        x=alt.X('court_date:T', title='Case Date'),
+        y=alt.Y('case_count:Q', title='Case Count'),
+        color='court_name:N').properties(title='Cases per court type over time').configure_title(anchor='middle').interactive()
 
 
 def tabs():
@@ -553,21 +553,21 @@ def tabs():
 
 
     with insights:
-        col1, col2 = st.columns(2)
-        with col1:
-            verdict_df = get_judge_chart_data_verdict(conn)
-            st.write(plot_pie(verdict_df, 'verdict'))
-            court_df = get_judge_data_court_type(conn)
-            st.write(plot_pie(court_df, 'court_name'))
-        with col2:
-            tag_df = get_judge_chart_data_tag(conn)
-            st.write(plot_pie(tag_df, 'tag_name'))
-        
-            case_count_df = get_cases_over_time(conn)
-            st.altair_chart(plot_cases_over_months(case_count_df))
-            court_cases_over_time_df = get_cases_over_time_per_court(conn)
-            st.altair_chart(plot_cases_over_months_per_court(
-            court_cases_over_time_df))
+        with st.container():
+            col1, col2, col3 = st.columns([5,1,5])
+            with col1:
+                verdict_df = get_judge_chart_data_verdict(conn)
+                st.write(plot_pie(verdict_df, 'verdict', 'Verdict'))
+                court_df = get_judge_data_court_type(conn)
+                st.write(plot_pie(court_df, 'court_name', 'Court'))
+            with col3:
+                tag_df = get_judge_chart_data_tag(conn)
+                st.write(plot_pie(tag_df, 'tag_name', 'Tag'))
+                case_count_df = get_cases_over_time(conn)
+                st.altair_chart(plot_cases_over_months(case_count_df))
+                court_cases_over_time_df = get_cases_over_time_per_court(conn)
+        st.altair_chart(plot_cases_over_months_per_court(
+        court_cases_over_time_df), use_container_width=True)
 
     with filtered_insights:
         with st.sidebar:
