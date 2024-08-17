@@ -484,16 +484,14 @@ def get_cases_over_time_per_court(conn: connection):
     return pd.DataFrame(result)
 
 
-def plot_filter_pie(df: pd.DataFrame, selected_filter: str, filter: str, tab: str):
+def plot_filter_pie(df: pd.DataFrame, selected_filter: str, filter: str, tab: str, name:str):
     filtered_data = df[df[tab] == selected_filter]
     aggregated_data = filtered_data.groupby(filter).sum().reset_index()
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
         theta=alt.Theta(field='count:Q'),
-        color=alt.Color(field=filter, type='nominal'),
+        color=alt.Color(field=filter, type='nominal', title = name),
         tooltip=[filter, 'count']
-    ).properties(
-        title=f"{filter.capitalize()} Distribution for {selected_filter}"
-    )
+    ).properties(width=500).mark_arc(outerRadius=100)
     return pie_chart
 
 
@@ -505,19 +503,19 @@ def plot_pie(df: pd.DataFrame, filter: str, name:str):
         tooltip=[filter, 'count'],
         order=alt.Order('count', sort='descending')
     ).properties(
-        title=f"{name} distribution", width=400,height=400)
+        title=f"{name} distribution", width=500,height=400).mark_arc(outerRadius=100)
     return pie_chart
 
 
-def plot_filter_pie_tags(df: pd.DataFrame, selected_filter: list[str], filter: str, tab: str):
+def plot_filter_pie_tags(df: pd.DataFrame, selected_filter: list[str], filter: str, tab: str, name:str):
     filtered_data = df[df[tab].isin(selected_filter)]
     aggregated_data = filtered_data.groupby(filter).sum().reset_index()
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
         alt.Theta('count:Q', title='Tag Count').stack(True),
-        color=alt.Color(field=filter, type='nominal'),
+        color=alt.Color(field=filter, type='nominal', title= name),
         tooltip=[filter, 'count'],
         order=alt.Order('count', sort='descending')
-    )
+    ).properties( width=450,height=400).mark_arc(outerRadius=135)
     return pie_chart
 
 
@@ -557,12 +555,14 @@ def tabs():
     with insights:
         st.markdown('\n')
         with st.container():
-            col1, col2, col3, col4, col5 = st.columns([1,5,1,5,1])
+            col1, col2, col3, col4, col5 = st.columns([0.5,5,5,8,0.5])
             with col2:
                 verdict_df = get_judge_chart_data_verdict(conn)
                 st.write(plot_pie(verdict_df, 'verdict', 'Verdict'))
                 court_df = get_judge_data_court_type(conn)
                 st.write(plot_pie(court_df, 'court_name', 'Court'))
+            with col3:
+                st.write('')
             with col4:
                 tag_df = get_judge_chart_data_tag(conn)
                 st.write(plot_pie(tag_df, 'tag_name', 'Tag'))
@@ -573,13 +573,14 @@ def tabs():
         court_cases_over_time_df), use_container_width=True)
 
     with filtered_insights:
-        st.markdown('<h5>Filter by:</h5>', unsafe_allow_html=True)
+        #st.markdown("""<div style='padding-bottom:-50px;'>Filter by:</div>""", unsafe_allow_html=True)
         
         col1, col2 = st.columns([0.7, 1])
 
         with col1:
+            st.write("<h5 style='padding-bottom: 6px; padding-top: 9px; padding-left: 10px'>Filter by:</h5>", unsafe_allow_html=True)
             filter = st.radio(
-                "Filter by:", ["Judge", "Tag", "Court name"], horizontal=True, label_visibility='hidden')
+                "Filter by:", ["Judge", "Tag", "Court name"], horizontal=True,label_visibility='collapsed')
             judges = get_judges(conn)
             courts = get_courts(conn)
             tags = get_tags(conn)
@@ -593,29 +594,41 @@ def tabs():
                 selected_court = st.selectbox("Select a court", courts, label_visibility="hidden")
             if filter == "Tag":
                 st.markdown("""<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""",unsafe_allow_html=True,)
-                selected_tags = st.multiselect("Select a tag", tags, label_visibility="hidden")
-
+                selected_tags = st.multiselect("Select a tag", tags, label_visibility="hidden", placeholder='Choose tags to include')
+        st.subheader('')
         if filter == "Judge":
-            judge_verdict_df = get_judge_chart_data_verdict(conn)
-            st.write(plot_filter_pie(judge_verdict_df,
-                     selected_judge, 'verdict', 'judge_name'))
-            judge_tag_df = get_judge_chart_data_tag(conn)
-            st.write(plot_filter_pie(judge_tag_df,
-                     selected_judge, 'tag_name', 'judge_name'))
-            judge_court_df = get_judge_data_court_type(conn)
-            st.write(plot_filter_pie(judge_court_df,
-                     selected_judge, 'court_name', 'judge_name'))
+            col1, col2, col3, col4, col5= st.columns([0.1,5,0.1,5,0.1])
+            with col2:
+                st.markdown(f'<h6>Verdict distribution for Judge {selected_judge}</h6>', unsafe_allow_html=True)
+                judge_verdict_df = get_judge_chart_data_verdict(conn)
+                st.write(plot_filter_pie(judge_verdict_df,
+                        selected_judge, 'verdict', 'judge_name', 'Verdict'))
+                st.markdown(f'<h6>Tag distribution for Judge {selected_judge}</h6>', unsafe_allow_html=True)
+                judge_tag_df = get_judge_chart_data_tag(conn)
+                st.write(plot_filter_pie(judge_tag_df,
+                        selected_judge, 'tag_name', 'judge_name', 'Tag'))
+            with col4:
+                st.markdown(f'<h6>Court distribution for Judge {selected_judge}</h6>', unsafe_allow_html=True)
+                judge_court_df = get_judge_data_court_type(conn)
+                st.write(plot_filter_pie(judge_court_df,
+                        selected_judge, 'court_name', 'judge_name', 'Court'))
 
         if filter == "Court name":
-            court_verdict_df = get_court_data_verdict(conn)
-            st.write(plot_filter_pie(court_verdict_df,
-                     selected_court, 'verdict', 'court_name'))
-            court_tag_df = get_court_data_tags(conn)
-            st.write(plot_filter_pie(court_tag_df,
-                     selected_court, 'tag_name', 'court_name'))
-            court_judge_df = get_court_data_judges(conn)
-            st.write(plot_filter_pie(court_judge_df,
-                     selected_court, 'judge_name', 'court_name'))
+            col1, col2, col3, col4, col5= st.columns([0.1,5,0.1,5,0.1])
+            with col2:
+                st.markdown(f'<h6>Verdict distribution for {selected_court}</h6>', unsafe_allow_html=True)
+                court_verdict_df = get_court_data_verdict(conn)
+                st.write(plot_filter_pie(court_verdict_df,
+                        selected_court, 'verdict', 'court_name', 'Verdict'))
+                st.markdown(f'<h6>Tag distribution for {selected_court}</h6>', unsafe_allow_html=True)
+                court_tag_df = get_court_data_tags(conn)
+                st.write(plot_filter_pie(court_tag_df,
+                        selected_court, 'tag_name', 'court_name', 'Tag'))
+            with col4:
+                st.markdown(f'<h6>Judge distribution for {selected_court}</h6>', unsafe_allow_html=True)
+                court_judge_df = get_court_data_judges(conn)
+                st.write(plot_filter_pie(court_judge_df,
+                        selected_court, 'judge_name', 'court_name', 'Judge'))
 
         if filter == "Tag":
             if selected_tags:
@@ -623,12 +636,18 @@ def tabs():
                 for tag in selected_tags:
                     title += tag + ", "
                 st.markdown(f"{title[:-2]}</h4>", unsafe_allow_html=True)
-                tag_verdict_df = get_tag_data_verdict(conn)
-                st.altair_chart(plot_filter_pie_tags(tag_verdict_df,
-                                                     selected_tags, 'verdict', 'tag_name'))
-                tag_judge_df = get_tag_data_judges(conn)
-                st.altair_chart(plot_filter_pie_tags(
-                    tag_judge_df, selected_tags, 'judge_name', 'tag_name'))
+                st.subheader('')
+                col1, col2, col3= st.columns([4,3,8])
+                with col1:
+                    st.markdown('<h5>Grouped by verdict</h5>', unsafe_allow_html=True)
+                    tag_verdict_df = get_tag_data_verdict(conn)
+                    st.altair_chart(plot_filter_pie_tags(tag_verdict_df,
+                                                        selected_tags, 'verdict', 'tag_name', 'Verdict'))
+                with col3:
+                    st.write('<h5>Grouped by judge</h5>', unsafe_allow_html=True)
+                    tag_judge_df = get_tag_data_judges(conn)
+                    st.altair_chart(plot_filter_pie_tags(
+                        tag_judge_df, selected_tags, 'judge_name', 'tag_name', 'Judge'))
 
 
 def display():
