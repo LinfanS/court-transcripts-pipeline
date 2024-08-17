@@ -501,7 +501,7 @@ def plot_pie(df: pd.DataFrame, filter: str, name:str):
     aggregated_data = df.groupby(filter).sum().reset_index()
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
         theta=alt.Theta(field='count:Q', title='Count').stack(True),
-        color=alt.Color(field=filter, type='nominal', title = name),
+        color=alt.Color(field=filter, type='nominal', title = name).scale(scheme='category20'),
         tooltip=[filter, 'count'],
         order=alt.Order('count', sort='descending')
     ).properties(
@@ -531,7 +531,7 @@ def plot_cases_over_months_per_court(df: pd.DataFrame):
     return alt.Chart(df.reset_index()).mark_line().encode(
         x=alt.X('court_date:T', title='Case Date'),
         y=alt.Y('case_count:Q', title='Case Count'),
-        color='court_name:N').properties(title='Cases per court type over time').configure_title(anchor='middle').interactive()
+        color=alt.Color('court_name:N').scale(scheme='category20')).properties(title='Cases per court type over time').configure_title(anchor='middle').interactive()
 
 
 def tabs():
@@ -541,26 +541,29 @@ def tabs():
         ["Cases", "General Insights", "Filtered Insights"])
 
     with cases:
-        available_cases = get_case_titles(conn)
-        st.markdown("<h4>Court case summary: </h4>", unsafe_allow_html=True)
-        selected_case = st.selectbox("Court case summary: ", sorted(available_cases),
-                                     placeholder='Select a case to be displayed', index=None,
-                                     label_visibility="collapsed")
-        if selected_case:
-            html = format_case_presentation(conn, selected_case)
-            st.markdown(html, unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1,8,1])
+        with col2:
+            available_cases = get_case_titles(conn)
+            st.markdown("<h4>Court case summary: </h4>", unsafe_allow_html=True)
+            selected_case = st.selectbox("Court case summary: ", sorted(available_cases),
+                                        placeholder='Select a case to be displayed', index=None,
+                                        label_visibility="collapsed")
+            if selected_case:
+                html = format_case_presentation(conn, selected_case)
+                st.markdown(html, unsafe_allow_html=True)
 
 
 
     with insights:
+        st.markdown('\n')
         with st.container():
-            col1, col2, col3 = st.columns([5,1,5])
-            with col1:
+            col1, col2, col3, col4, col5 = st.columns([1,5,1,5,1])
+            with col2:
                 verdict_df = get_judge_chart_data_verdict(conn)
                 st.write(plot_pie(verdict_df, 'verdict', 'Verdict'))
                 court_df = get_judge_data_court_type(conn)
                 st.write(plot_pie(court_df, 'court_name', 'Court'))
-            with col3:
+            with col4:
                 tag_df = get_judge_chart_data_tag(conn)
                 st.write(plot_pie(tag_df, 'tag_name', 'Tag'))
                 case_count_df = get_cases_over_time(conn)
@@ -570,19 +573,18 @@ def tabs():
         court_cases_over_time_df), use_container_width=True)
 
     with filtered_insights:
-        with st.sidebar:
-
-            filter = st.selectbox(
-                "Filter by:", ("Judge", "Tag", "Court name")
-            )
-        judges = get_judges(conn)
-        courts = get_courts(conn)
-        tags = get_tags(conn)
+        st.markdown('<h5>Filter by:</h5>', unsafe_allow_html=True)
+        
         col1, col2 = st.columns([0.7, 1])
 
         with col1:
-            st.markdown(f"""<div style='padding-top: 35px;'>Displaying analytics for <span style='color: red;'>{
-                        filter}</span>:</div>""", unsafe_allow_html=True)
+            filter = st.radio(
+                "Filter by:", ["Judge", "Tag", "Court name"], horizontal=True, label_visibility='hidden')
+            judges = get_judges(conn)
+            courts = get_courts(conn)
+            tags = get_tags(conn)
+            # st.markdown(f"""<div style='padding-top: 35px;'>Displaying analytics for <span style='color: red;'>{
+            #             filter}</span>:</div>""", unsafe_allow_html=True)
 
         with col2:
             if filter == "Judge":
@@ -630,8 +632,12 @@ def tabs():
 
 
 def display():
-    st.title('Court Transcripts :judge:')
-    tabs()
+    col1, col2, col3 = st.columns([2,3,1])
+    with col2:
+        st.title('Court Transcripts :judge:')
+    col1, col2, col3 = st.columns([1,9,1])
+    with col2:
+        tabs()
 
 
 if __name__ == "__main__":
