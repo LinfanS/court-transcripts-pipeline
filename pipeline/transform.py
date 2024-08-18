@@ -4,6 +4,7 @@ website through ChatGPT into a format that can be loaded into a database"""
 from os import getenv
 from datetime import datetime, date
 from string import capwords
+import logging
 from ast import literal_eval
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -14,6 +15,7 @@ from extract import get_listing_data
 
 
 load_dotenv()
+logger = logging.getLogger("batch_pipeline")
 client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
 
 
@@ -51,8 +53,29 @@ def get_summary(prompt: str, transcript: str) -> ChatCompletion:
         ],
         temperature=0.1,  # low temperature to ensure the model doesn't diverge from the prompt
     )
-    print(completion.usage)
+    usage = completion.usage
+    completion_tokens = getattr(usage, "completion_tokens", 0)
+    prompt_tokens = getattr(usage, "prompt_tokens", 0)
+    total_tokens = getattr(usage, "total_tokens", 0)
+    cost = [completion_tokens, prompt_tokens, total_tokens]
+    logger.info("GPT-4o-mini usage cost: %s", cost)
     return completion
+
+
+def is_valid_participant(data: dict) -> bool:
+    """Check if the participant dict is valid"""
+    for key, value in data.items():
+        if not isinstance(key, (str, type(None))):
+            return False
+        if not isinstance(value, dict):
+            return False
+        for sub_key, sub_value in value.items():
+            if not isinstance(sub_key, (str, type(None))):
+                return False
+            if not isinstance(sub_value, (str, type(None))):
+                return False
+
+    return True
 
 
 def validate_gpt_response(data: dict) -> bool:
@@ -78,6 +101,10 @@ def validate_gpt_response(data: dict) -> bool:
             return False
         if isinstance(value, list) and len(value) == 0:
             return False
+        if isinstance(value, dict):
+            if not is_valid_participant(value):
+                return False
+
     return True
 
 
@@ -164,7 +191,9 @@ def assemble_data(data_list: list[dict]) -> dict:
                     )
                 )
             else:
-                print(f"Invalid GPT response: {data}")
+                logger.warning("Invalid GPT response: %s", data)
+                with open("invalid_gpt_responses.txt", "a", encoding="utf-8") as f:
+                    f.write(str(data) + "\n")
 
     return table_data
 

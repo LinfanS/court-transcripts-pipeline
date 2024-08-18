@@ -29,11 +29,9 @@ def synonym_extractor(phrase: str) -> set[str]:
     return set(synonyms)
 
 
-def replace_word_in_list(
-    all_words: list[str], good_word: str, bad_word: str
-) -> list[str]:
-    """Function to replace words in a list with others"""
-    return list(map(lambda x: x.replace(good_word, bad_word), all_words))
+def replace_word_in_list(words: list[str], old_word: str, new_word: str) -> list[str]:
+    """Replaces all occurrences of old_word with new_word in the list."""
+    return [new_word if word == old_word else word for word in words]
 
 
 def replace_synonyms(words: list[str]) -> list[str]:
@@ -552,8 +550,8 @@ if __name__ == "__main__":
             ),
             (
                 (
-                    "Suffolk Mental Health Partnership NHS Trust",
-                    ("Naomi Ellenbogen", "Kennedys"),
+                    None,
+                    (None, None),
                 ),
                 (
                     "Sandwell Metropolitan Borough Council",
