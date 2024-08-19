@@ -1,4 +1,5 @@
-# IAM Role for Lambda
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_role" "lambda_role" {
   name = "c12-court-lambda-role"
 
@@ -16,7 +17,33 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-# Lambda function using Docker image from ECR
+resource "aws_cloudwatch_log_group" "lambda_log_group" {
+  name              = "/aws/lambda/c12-court-pipeline"
+  retention_in_days = 14
+}
+
+resource "aws_iam_role_policy" "lambda_logging_policy" {
+  name = "lambda-logging-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = [
+          "arn:aws:logs:${var.REGION}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/*"
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_lambda_function" "my_lambda_function" {
   function_name = "c12-court-pipeline"
   role          = aws_iam_role.lambda_role.arn
@@ -26,15 +53,15 @@ resource "aws_lambda_function" "my_lambda_function" {
 
   environment {
     variables = {
-      OPENAI_API_KEY = var.OPENAI_API_KEY,
-      DB_HOST = var.DB_HOST,
-      DB_NAME = var.DB_NAME,
-      DB_PASSWORD = var.DB_PASSWORD,
-      DB_USER = var.DB_USER,
-      DB_PORT = var.DB_PORT,
-      ACCESS_KEY_ID = var.ACCESS_KEY_ID,
-      SECRET_ACCESS_KEY = var.SECRET_ACCESS_KEY,
-      REGION = var.REGION
+      OPENAI_API_KEY     = var.OPENAI_API_KEY,
+      DB_HOST            = var.DB_HOST,
+      DB_NAME            = var.DB_NAME,
+      DB_PASSWORD        = var.DB_PASSWORD,
+      DB_USER            = var.DB_USER,
+      DB_PORT            = var.DB_PORT,
+      ACCESS_KEY_ID      = var.ACCESS_KEY_ID,
+      SECRET_ACCESS_KEY  = var.SECRET_ACCESS_KEY,
+      REGION             = var.REGION
     }
   }
 
@@ -43,9 +70,10 @@ resource "aws_lambda_function" "my_lambda_function" {
     size = 1024
   }
   timeout     = 600
+
+  depends_on = [aws_cloudwatch_log_group.lambda_log_group, aws_iam_role_policy.lambda_logging_policy]
 }
 
-# IAM Role for EventBridge Scheduler to invoke the Lambda function
 resource "aws_iam_role" "scheduler_lambda_role" {
   name = "c12-court-scheduler-role"
 
@@ -62,7 +90,6 @@ resource "aws_iam_role" "scheduler_lambda_role" {
     ]
   })
 
-  # Attach necessary policies for the role to invoke Lambda
   inline_policy {
     name = "lambda-invoke-policy"
     policy = jsonencode({
@@ -79,7 +106,7 @@ resource "aws_iam_role" "scheduler_lambda_role" {
 
   depends_on = [aws_lambda_function.my_lambda_function]
 }
-# EventBridge Scheduler Schedule to trigger Lambda every 2 hours between 09:00 and 17:00
+
 resource "aws_scheduler_schedule" "court_lambda_schedule" {
   name       = "c12-court-lambda-schedule"
   group_name = "default"
@@ -88,17 +115,20 @@ resource "aws_scheduler_schedule" "court_lambda_schedule" {
     mode = "OFF"
   }
 
-  schedule_expression = "cron(0 9-17/2 ? * MON-FRI *)"
+  schedule_expression = "cron(0 9-17/2 ? * * *)"
 
   target {
     arn      = aws_lambda_function.my_lambda_function.arn
     role_arn = aws_iam_role.scheduler_lambda_role.arn
   }
 
-  depends_on = [aws_lambda_function.my_lambda_function, aws_iam_role.scheduler_lambda_role]
+  depends_on = [aws_lambda_function.my_lambda_function, aws_iam_role.scheduler_lambda_role, aws_iam_role_policy.lambda_logging_policy]
 }
 
-# Outputs
 output "lambda_function_arn" {
   value = aws_lambda_function.my_lambda_function.arn
+}
+
+output "cloudwatch_log_group_name" {
+  value = aws_cloudwatch_log_group.lambda_log_group.name
 }
