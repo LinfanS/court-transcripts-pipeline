@@ -148,7 +148,7 @@ def convert_dict_to_tuple(data: dict) -> tuple:
     return flattened_result
 
 
-def assemble_data(data_list: list[dict]) -> dict:
+def assemble_data(data_list: list[dict], is_batch_pipeline: bool = False) -> dict:
     """Formats the combined data from into a single dictionary for load"""
     table_data = {
         "verdicts": [],
@@ -192,8 +192,9 @@ def assemble_data(data_list: list[dict]) -> dict:
                 )
             else:
                 logger.warning("Invalid GPT response: %s", data)
-                with open("invalid_gpt_responses.txt", "a", encoding="utf-8") as f:
-                    f.write(str(data) + "\n")
+                if is_batch_pipeline:
+                    with open("invalid_gpt_responses.txt", "a", encoding="utf-8") as f:
+                        f.write(str(data) + "\n")
 
     return table_data
 

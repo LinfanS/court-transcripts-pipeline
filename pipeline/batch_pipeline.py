@@ -74,7 +74,7 @@ def main() -> None:
                     )
                 logger.info(message)
 
-            insert_to_database(get_connection(), assemble_data(gpt_response))
+            insert_to_database(get_connection(), assemble_data(gpt_response, True))
             message = f"Page {page_num} inserted to database, {count} records in total"
             logger.info(message)
             progress.update(task, advance=1)
