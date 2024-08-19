@@ -12,8 +12,6 @@ from Levenshtein import jaro_winkler
 from judge_matching import match_judge, get_judges
 from judges_seed import seed_judges
 
-nltk.download("wordnet")
-
 
 def synonym_extractor(phrase: str) -> set[str]:
     """Uses the wordnet module from the nltk library to find synonyms of a word"""
@@ -464,6 +462,7 @@ def insert_to_database(conn: connection, transformed_data: dict) -> str:
 
 if __name__ == "__main__":
     load_dotenv()
+    nltk.download("wordnet")
     transform = {
         "verdicts": ["Dismissed", "Dismissed"],
         "courts": [
