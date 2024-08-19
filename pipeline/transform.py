@@ -15,7 +15,7 @@ from extract import get_listing_data
 
 
 load_dotenv()
-logger = logging.getLogger("batch_pipeline")
+logger = logging.getLogger("pipeline")
 client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
 
 
