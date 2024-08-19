@@ -539,16 +539,16 @@ def tabs():
         ["Cases", "General Insights", "Filtered Insights"])
 
     with cases:
-        col1, col2, col3 = st.columns([1,8,1])
-        with col2:
-            available_cases = get_case_titles(conn)
-            st.markdown("<h4>Court case summary: </h4>", unsafe_allow_html=True)
-            selected_case = st.selectbox("Court case summary: ", sorted(available_cases),
-                                        placeholder='Select a case to be displayed', index=None,
-                                        label_visibility="collapsed")
-            if selected_case:
-                html = format_case_presentation(conn, selected_case)
-                st.markdown(html, unsafe_allow_html=True)
+        # col1, col2, col3 = st.columns([1,8,1])
+        # with col2:
+        available_cases = get_case_titles(conn)
+        st.markdown("<h4>Court case summary: </h4>", unsafe_allow_html=True)
+        selected_case = st.selectbox("Court case summary: ", sorted(available_cases),
+                                    placeholder='Select a case to be displayed', index=None,
+                                    label_visibility="collapsed")
+        if selected_case:
+            html = format_case_presentation(conn, selected_case)
+            st.markdown(html, unsafe_allow_html=True)
 
 
 
