@@ -450,6 +450,7 @@ def get_cases_over_time(conn: connection):
             SELECT extract(month FROM court_date) as month, COUNT(*) as case_count
             FROM court_case as cc
             GROUP BY month 
+            ORDER BY month
             ;
     """
 
@@ -468,15 +469,42 @@ def get_cases_over_time_per_court(conn: connection):
             SELECT cc.court_date, c.court_name, COUNT(*) as case_count
             FROM court_case as cc
             JOIN court as c ON c.court_id = cc.court_id
-            GROUP BY cc.court_date, c.court_name 
-            ;
+            GROUP BY cc.court_date, c.court_name
+            ORDER BY cc.court_date;
     """
 
     with conn.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
-    return pd.DataFrame(result)
+    full_df = pd.DataFrame(result)
+    for i,court in enumerate(full_df['court_name']):
+        if court[:10] == 'High Court':
+            temp_name = court.split('(')
+            full_df.loc[i, 'court_name'] = 'HC (' + temp_name[1]
+        elif court[:15] == 'Court of Appeal':
+            temp_name = court.split('(')
+            full_df.loc[i, 'court_name'] = 'CoA (' + temp_name[1]
 
+    return full_df
+
+def filtered_cases_over_time(conn:connection,filter:tuple):
+    """
+    Retrieves cases over time but filters by courts
+    """
+    query = """
+    WITH original_data AS(
+        SELECT cc.court_date, c.court_name, COUNT(*) as case_count
+        FROM court_case as cc
+        JOIN court as c ON c.court_id = cc.court_id
+        GROUP BY cc.court_date, c.court_name
+        ORDER BY cc.court_date)
+    SELECT * FROM original_data
+    WHERE court_name IN %s;
+    """
+    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+        curs.execute(query, (tuple(filter),))
+        result = curs.fetchall()
+    return pd.DataFrame(result)
 
 def plot_filter_pie(df: pd.DataFrame, selected_filter: str, filter: str, tab: str, name: str):
     filtered_data = df[df[tab] == selected_filter]
@@ -516,17 +544,54 @@ def plot_filter_pie_tags(df: pd.DataFrame, selected_filter: list[str], filter: s
 
 
 def plot_cases_over_months(df: pd.DataFrame):
-    #TODO: make this into a bar chart?
-    return alt.Chart(df.reset_index(), title='Case count per month?').mark_line().encode(
-        x=alt.X('month:T', title='Date'),
-        y=alt.Y('case_count:Q', title='Case Count')).interactive()
+    return alt.Chart(df.reset_index(), title='Months where more cases were heard').mark_bar().encode(
+        x=alt.X('month', title='Month', sort=None, axis=alt.Axis(labelAngle=0)),
+        y=alt.Y('case_count', title='Case Count')).properties(width=450, height=400).interactive()
 
 
 def plot_cases_over_months_per_court(df: pd.DataFrame):
     return alt.Chart(df.reset_index()).mark_line().encode(
         x=alt.X('court_date:T', title='Case Date'),
-        y=alt.Y('case_count:Q', title='Case Count'),
-        color=alt.Color('court_name:N').scale(scheme='paired')).properties(title='Cases per court type over time').configure_title(anchor='middle').interactive()
+        y=alt.Y('overall_sum:Q', title='Case Count')).properties(title='Cases per court type over time').configure_title(anchor='middle').interactive()
+
+def multiple_courts(df:pd.DataFrame):
+    click = alt.selection_multi(encodings=['color'])
+
+    scatter = alt.Chart(df).mark_line().encode(
+        x='court_date:T',
+        y='case_count:Q',
+        color=alt.Color('court_name:N').scale(scheme='rainbow')).transform_filter(click).interactive()
+
+    hist = alt.Chart(df).mark_bar().encode(
+        x='count()',
+        y='court_name',
+        color=alt.condition(click, 'court_name', alt.value('viridis'))).add_selection(click)
+
+    return scatter & hist
+
+def draw_line(data):
+    data['overall_sum'] = data['case_count'].cumsum()
+    return alt.Chart(data).mark_line(opacity=0.5, thickness=0.01).encode(
+        x=alt.X('court_date:T'), #axis=alt.Axis(format="%d/%m", title='Day/Hour')),
+        y=alt.Y('overall_sum:Q', title='Case Count'),
+        color='court_name',
+        tooltip=['court_name', 'overall_sum']
+    )
+
+def select_court(df:pd.DataFrame):
+    graph = list()
+    for i in set(df['court_name']):
+        graph.append(draw_line(df[df['court_name']==i]))
+    
+    combined_graph = alt.layer(*graph).properties(title='How the total amount of court hearings compare over different court types').interactive()
+    
+    return combined_graph
+
+     
+    return alt.Chart(df).mark_line().encode(
+        x='court_date:T',
+        y='overall_sum:Q',
+        color=alt.Color('court_name:N').scale(scheme='rainbow')).interactive()
 
 
 def tabs():
@@ -563,10 +628,27 @@ def tabs():
                 tag_df = get_judge_chart_data_tag(conn)
                 st.write(plot_pie(tag_df, 'tag_name', 'Tag'))
                 case_count_df = get_cases_over_time(conn)
+                case_count_df = case_count_df.replace([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
                 st.altair_chart(plot_cases_over_months(case_count_df))
-                court_cases_over_time_df = get_cases_over_time_per_court(conn)
-        st.altair_chart(plot_cases_over_months_per_court(
-            court_cases_over_time_df), use_container_width=True)
+        court_cases_over_time_df = get_cases_over_time_per_court(conn)
+        all_courts = court_cases_over_time_df[['court_date','case_count']].sort_values(by=['court_date'], ascending=True)
+        all_courts['overall_sum'] = all_courts['case_count'].cumsum()
+        st.altair_chart(plot_cases_over_months_per_court(all_courts), use_container_width=True)
+        all_data = court_cases_over_time_df.sort_values(by=['court_date'], ascending=True)
+        st.altair_chart(multiple_courts(all_data), use_container_width=True)
+        st.markdown("""<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
+        all_choices = list(set(get_court_data_judges(conn)['court_name']))
+        court_choice = st.multiselect('Select a court to display', all_choices, default=all_choices, help='Abbreviated. HC = High Court, CoA = Court of Appeal')
+        st.altair_chart(select_court(filtered_cases_over_time(conn,(court_choice))), use_container_width=True)
+        selected = list()
+        col1, col2 = st.columns([1,3])
+        with col1:
+            for i in all_choices:
+                on = st.checkbox(i,value=False)
+                if not on:
+                    selected.append(i)
+        with col2:
+            st.altair_chart(select_court(filtered_cases_over_time(conn,(selected))), use_container_width=True)
 
     with filtered_insights:
         # st.markdown("""<div style='padding-bottom:-50px;'>Filter by:</div>""", unsafe_allow_html=True)
@@ -593,7 +675,7 @@ def tabs():
                     "Select a court", courts, label_visibility="hidden")
             if filter == "Tag":
                 st.markdown(
-                    """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True,)
+                    """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
                 selected_tags = st.multiselect(
                     "Select a tag", tags, label_visibility="hidden", placeholder='Choose tags to include', default='Patents')
         st.subheader('')
