@@ -6,6 +6,9 @@ from psycopg2.extensions import connection
 from psycopg2.extras import RealDictCursor
 from os import getenv
 from dotenv import load_dotenv
+import re
+from csv import DictWriter
+from notify import get_sns_client, sub_to_topics
 
 st.set_page_config(layout="wide")
 
@@ -541,11 +544,29 @@ def plot_cases_over_months_per_court(df: pd.DataFrame):
         color=alt.Color('court_name:N').scale(scheme='category20')).properties(title='Cases per court type over time').configure_title(anchor='middle').interactive()
 
 
+def subscribe_to_court(courts: list):
+    st.header("Subscribe to Notifications")
+
+    input = st.text_input("Enter your email to subscribe:")
+    email = re.search(r"[\w_.-]+@[\w_.-]+[.]+[\w]+", input)
+    st.markdown(
+        """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
+    courts = st.multiselect(
+        "Select a court", courts, label_visibility="hidden", placeholder='Choose courts to include')
+    if st.button("Subscribe"):
+        if email and courts:
+            sns_client = get_sns_client()
+            sub_to_topics(courts, sns_client, email.group())
+            st.success(f"Subscribed successfully!")
+        else:
+            st.error("Please enter a valid email address and select a judge.")
+
+
 def tabs():
     load_dotenv()
     conn = get_connection()
-    cases, insights, filtered_insights = st.tabs(
-        ["Cases", "General Insights", "Filtered Insights"])
+    cases, insights, filtered_insights, subscribe = st.tabs(
+        ["Cases", "General Insights", "Filtered Insights", "Subscribe"])
 
     with cases:
         # col1, col2, col3 = st.columns([1,8,1])
@@ -668,6 +689,8 @@ def tabs():
                     tag_judge_df = get_tag_data_judges(conn)
                     st.altair_chart(plot_filter_pie_tags(
                         tag_judge_df, selected_tags, 'judge_name', 'tag_name', 'Judge'))
+    with subscribe:
+        subscribe_to_court(courts)
 
 
 def display():
