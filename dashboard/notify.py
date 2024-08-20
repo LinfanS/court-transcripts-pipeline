@@ -18,8 +18,7 @@ def get_sns_client():
 
 def create_or_find_topic(client, subscription: str) -> str:
     """
-    Create's new SNS topics if not already made and returns the matched topic if
-    it has already been made.
+    Create's new SNS topics if not already made and returns the matched topic if it has already been made.
     """
     all_topics = client.list_topics()
     for topic_arn in all_topics["Topics"]:
