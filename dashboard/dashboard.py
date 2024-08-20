@@ -581,17 +581,11 @@ def draw_line(data):
 def select_court(df:pd.DataFrame):
     graph = list()
     for i in set(df['court_name']):
-        graph.append(draw_line(df[df['court_name']==i]))
-    
-    combined_graph = alt.layer(*graph).properties(title='How the total amount of court hearings compare over different court types').interactive()
-    
-    return combined_graph
+        graph.append(draw_line(df[df['court_name']==i]))    
+    return graph
 
-     
-    return alt.Chart(df).mark_line().encode(
-        x='court_date:T',
-        y='overall_sum:Q',
-        color=alt.Color('court_name:N').scale(scheme='rainbow')).interactive()
+def combine_to_graph(data_to_include:list[pd.DataFrame]): 
+    return alt.layer(*data_to_include).properties(title='How the total amount of court hearings compare over different court types').interactive()
 
 
 def tabs():
@@ -639,7 +633,8 @@ def tabs():
         st.markdown("""<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
         all_choices = list(set(get_court_data_judges(conn)['court_name']))
         court_choice = st.multiselect('Select a court to display', all_choices, default=all_choices, help='Abbreviated. HC = High Court, CoA = Court of Appeal')
-        st.altair_chart(select_court(filtered_cases_over_time(conn,(court_choice))), use_container_width=True)
+        data = select_court(filtered_cases_over_time(conn,(court_choice)))
+        st.altair_chart(data, use_container_width=True)
         selected = list()
         col1, col2 = st.columns([1,3])
         with col1:
