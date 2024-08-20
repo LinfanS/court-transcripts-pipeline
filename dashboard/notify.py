@@ -40,7 +40,7 @@ def create_email_subscription(client, email: str, topic_arn: str) -> str:
     return subscription["SubscriptionArn"]
 
 
-def sub_to_topics(courts: list[str], client, email: str):
+def sub_to_topics(courts: list[str], client, email: str) -> None:
     """
     Subscribes a user's email to all courts selected as a list.
     """
