@@ -20,7 +20,7 @@ BATCH_URL = """https://caselaw.nationalarchives.gov.uk/judgments/search?per_page
 
 def initialise_logger() -> logging.Logger:
     """Initialise the logger to log to both file and console."""
-    logger = logging.getLogger("batch_pipeline")
+    logger = logging.getLogger("pipeline")
     logger.setLevel(logging.INFO)
     file_handler = logging.FileHandler("batch_pipeline.log")
     console_handler = logging.StreamHandler()
