@@ -123,3 +123,10 @@ def match_judge(judge: str, current_judges: list) -> tuple | None:
         return match[0]
     return standardise_judge_name(judge)
 
+
+if __name__ == "__main__":
+    load_dotenv()
+    db_conn = get_connection()
+    judges = get_judges(db_conn)
+    test_match = match_judge("Judge Bond", judges)
+    print(test_match)
