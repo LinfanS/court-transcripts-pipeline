@@ -1,7 +1,7 @@
 "Script that will test the functioning of the transform script"
 import pytest
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, mock_open, patch
 from datetime import date
 from extract import get_listing_data
 from transform import (
@@ -41,6 +41,37 @@ def example_dict():
         "people": [],
     }
 
+    return {
+        "verdicts": [],
+        "courts": [],
+        "case_ids": [],
+        "summ": [],
+        "title": [],
+        "date": [],
+        "number": [],
+        "url": [],
+        "v_sum": [],
+        "judges": [],
+        "tags": [],
+        "people": [],
+    }
+
+
+@pytest.fixture
+def example_gpt_dict():
+    return {
+        "verdict": "My verdict",
+        "summary": "My summary",
+        "case_number": "My case number",
+        "verdict_summary": "My verdict summary",
+        "judge": ["Judge A"],
+        "tags": ["Tag A"],
+        "first_side": {"MICHAEL WILSON & PARTNERS LIMITED": {"David Holland QC": None}},
+        "second_side": {
+            "SOME OTHER WILSON & PARTNERS LIMITED": {"James Holland QC": None}
+        },
+    }
+
 
 class TestShorterTranscript:
 
@@ -76,11 +107,49 @@ class TestDictConversion:
         example_dict = {"first_side": example_dict, "second_side": example_dict}
         assert isinstance(convert_dict_to_tuple(example_dict), tuple)
 
+    def test_dict_converted_no_claimant(self, example_dict):
+        example_dict = {
+            "first_side": None,
+            "second_side": {
+                "MICHAEL WILSON & PARTNERS LIMITED": {"David Holland QC": None}
+            },
+        }
+        assert isinstance(convert_dict_to_tuple(example_dict), tuple)
+
+
+class TestDataAssembling:
+
+    def test_convert_when_missing_claimant(self):
+        example_dict = {
+            "first_side": None,
+            "second_side": {
+                "MICHAEL WILSON & PARTNERS LIMITED": {"David Holland QC": None}
+            },
+        }
+        assert isinstance(convert_dict_to_tuple(example_dict), tuple)
+
 
 class TestDataAssembling:
 
     def test_assemble_data_combines_to_dict(self, example_dict):
         assert isinstance(assemble_data([example_dict, example_dict]), dict)
+
+    def test_data_combines_with_response(self, example_gpt_dict):
+        assert isinstance(assemble_data([example_gpt_dict]), dict)
+
+
+class TestDataWriteFile(unittest.TestCase):
+
+    def test_function_writes_to_file_when_is_batch_pipeline(self):
+        example_dict = {"verdict": "Guilty"}
+        expected_output = str(example_dict) + "\n"
+
+        with patch("builtins.open", mock_open()) as mocked_file:
+            assemble_data([example_dict], True)
+            mocked_file.assert_called_once_with(
+                "invalid_gpt_responses.txt", "a", encoding="utf-8"
+            )
+            mocked_file().write.assert_called_once_with(expected_output)
 
 
 class TestAllData:
@@ -159,6 +228,9 @@ class TestGPTResponses:
                 "SOME OTHER WILSON & PARTNERS LIMITED": {"James Holland QC": None}
             },
         }
+
+    def test_valid_gpt_response(self, example_gpt_dict):
+
         assert validate_gpt_response(example_gpt_dict) == True
 
     def test_invalid_gpt_response_not_string(self):
