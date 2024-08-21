@@ -503,7 +503,7 @@ def multiple_courts(df: pd.DataFrame):
 
 
 def draw_line(data):
-    data['overall_sum'] = data['case_count'].cumsum()
+    data.loc[:, 'overall_sum'] = data['case_count'].cumsum()
     return alt.Chart(data).mark_line(opacity=0.5, thickness=0.01).encode(
         # axis=alt.Axis(format="%d/%m", title='Day/Hour')),
         x=alt.X('court_date:T'),
@@ -672,7 +672,7 @@ def display():
     with col1:
         st.image("justicelens.jpg", width=150)
     with col2:
-        st.title('Justice Lens')
+        st.markdown('<h1>Justice Lens</h1>', unsafe_allow_html=True)
     with col3:
         st.image("justicelens.jpg", width=150)
     col5, col6, col7 = st.columns([1, 9, 1])
