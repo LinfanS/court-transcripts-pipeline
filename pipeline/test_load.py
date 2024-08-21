@@ -1,8 +1,8 @@
-"Script that will take the transformed data and load it to the rds"
+"Script that will test the functioning of the load script"
 import pytest
 import unittest
 from datetime import datetime
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 from psycopg2.extensions import connection
 from load import synonym_extractor, replace_synonyms, return_single_ids, return_multiple_ids
 from load import get_verdict_mapping, get_court_mapping, get_tag_mapping, get_judge_mapping, get_law_firm_mapping, get_lawyer_mapping, get_participant_mapping

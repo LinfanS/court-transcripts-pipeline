@@ -1,4 +1,4 @@
-"Script that will take the transformed data and load it to the rds"
+"Script that will test the functioning of the extract script"
 import pytest
 from bs4 import BeautifulSoup
 from extract import get_article_data, get_max_page_num, validate_html_data, extract_judgment_data, get_listing_data
