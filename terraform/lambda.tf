@@ -22,6 +22,19 @@ resource "aws_cloudwatch_log_group" "lambda_log_group" {
   retention_in_days = 14
 }
 
+resource "aws_ecr_repository" "real_lambda_ecr_repo" {
+  name = "c12-court-transcript-lambda-ecr"
+}
+
+resource "aws_ecr_repository" "lambda_ecr_repo" {
+  name = "c12-court-transcript-ecr"
+}
+
+output "ecr_repository_url" {
+  value = aws_ecr_repository.lambda_ecr_repo.repository_url
+}
+
+
 resource "aws_iam_role_policy" "lambda_logging_policy" {
   name = "lambda-logging-policy"
   role = aws_iam_role.lambda_role.id
