@@ -62,9 +62,9 @@ def get_summary(prompt: str, transcript: str) -> ChatCompletion:
     return completion
 
 
-def is_valid_participant(data: dict) -> bool:
+def is_valid_participant(participant_dict: dict) -> bool:
     """Check if the participant dict is valid"""
-    for key, value in data.items():
+    for key, value in participant_dict.items():
         if not isinstance(key, (str, type(None))):
             return False
         if not isinstance(value, dict):
@@ -78,7 +78,7 @@ def is_valid_participant(data: dict) -> bool:
     return True
 
 
-def validate_gpt_response(data: dict) -> bool:
+def validate_gpt_response(gpt_response_dict: dict) -> bool:
     """Validates the data shape extracted from the GPT-4o-mini API"""
     expected_keys = {
         "verdict": str,
@@ -92,7 +92,7 @@ def validate_gpt_response(data: dict) -> bool:
     }
 
     for key, expected_type in expected_keys.items():
-        value = data.get(key)
+        value = gpt_response_dict.get(key)
         if value is None:
             return False
         if not isinstance(value, expected_type):
@@ -133,10 +133,10 @@ def format_date(date_string: str) -> date:
     return datetime.strptime(clean_date_string, "%d %b %Y").date()
 
 
-def convert_dict_to_tuple(data: dict) -> tuple:
+def convert_dict_to_tuple(participant_dict: dict) -> tuple:
     """Converts a claimant and defendant data dictionary to a tuple"""
     result = []
-    for outer_key, inner_dict in data.items():
+    for outer_key, inner_dict in participant_dict.items():
         if inner_dict is None:
             result.append((outer_key, (None, None)))
         else:
