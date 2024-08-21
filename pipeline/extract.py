@@ -54,7 +54,7 @@ def validate_html_data(data: dict) -> bool:
     return True
 
 
-def extract_judgment_data(case: Tag, base_url: str, already_loaded: list):
+def extract_judgment_data(case: Tag, base_url: str, already_loaded: list) -> dict:
     """Extracts judgment data from a list item."""
     title_tag = case.find("span", class_="judgment-listing__title")
     court_tag = case.find("span", class_="judgment-listing__court")
@@ -82,7 +82,7 @@ def extract_judgment_data(case: Tag, base_url: str, already_loaded: list):
 
 
 def get_listing_data(
-    url_no_page_num: str, page_num: int, already_loaded=None
+    url_no_page_num: str, page_num: int, already_loaded:list|None = None
 ) -> list[dict]:
     """Returns a list of dictionaries with the data for a given page number sorting by oldest"""
 
