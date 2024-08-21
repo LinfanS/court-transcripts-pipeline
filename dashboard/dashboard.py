@@ -172,7 +172,7 @@ def format_participants_to_string(participants: list[dict], is_defendant: bool) 
         html += f"<div><strong>{participant}</strong><br>"
         if lawyer and lawyer != 'None':
             html += f"Represented by: {lawyer.title()} <br>"
-        elif law_firm and law_firm != 'None':
+        if law_firm and law_firm != 'None':
             html += f"From: {law_firm} <br>"
         html +='<br>'
         html += "</div>"
