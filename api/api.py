@@ -2,9 +2,10 @@
 allowing the user to filter court cases by various parameters"""
 
 from os import getenv
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import date
-from fastapi import FastAPI, Depends, Query
+from fastapi import FastAPI, Depends, Query, status, Response, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy import (
     Boolean,
     Column,
@@ -292,12 +293,21 @@ class CourtCaseModel(BaseModel):
     class Config:
         orm_mode = True
 
+def no_matches(query_result: list, search: String, response: Response, endpoint: String):
+    if not query_result:
+        response.status_code = status.HTTP_200_OK
+        return JSONResponse({"message": f"No matching {endpoint} found for input: {search}"})
 
-@app.get("/courts/", response_model=List[CourtModel])
+@app.get("/")
+def welcome_api(): return {"message": "Welcome to the Justice Lens api"}
+
+
+@app.get("/courts/")
 def read_courts(
+    response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     search: Optional[str] = Query(None, description="Court name to filter by"),
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db)
 ):
     """API endpoint to get court types with optional search and limit parameters"""
     query = db.query(Court)
@@ -305,14 +315,21 @@ def read_courts(
         query = query.where(Court.court_name.ilike(f"%{search}%"))
     if limit is not None:
         query = query.limit(limit)
+
+    result = query.all()
+
+    if not result:
+        return no_matches(result, search, response, endpoint="court name")
+    
     return query.all()
 
 
 @app.get("/judges/", response_model=List[JudgeModel])
 def read_judges(
+    response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     search: Optional[str] = Query(None, description="Judge name to filter by"),
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db)
 ):
     """API endpoint to get judge names with optional search and limit parameters"""
     query = db.query(Judge)
@@ -320,11 +337,18 @@ def read_judges(
         query = query.where(Judge.judge_name.like(f"%{search}%"))
     if limit is not None:
         query = query.limit(limit)
+
+    result = query.all()
+
+    if not result:
+        return no_matches(result, search, response, endpoint="judges")
+    
     return query.all()
 
 
 @app.get("/lawyers/", response_model=List[LawyerModel])
 def read_lawyers(
+    response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     lawyer: Optional[str] = Query(None, description="Lawyer name to filter by"),
     law_firm: Optional[str] = Query(None, description="Law firm name to filter by"),
@@ -335,17 +359,22 @@ def read_lawyers(
 
     if lawyer is not None:
         query = query.where(Lawyer.lawyer_name.ilike(f"%{lawyer}%"))
+        result = query.all()
+        if not result:
+            return no_matches(result, lawyer, response)
     if law_firm is not None:
         query = query.join(Lawyer.law_firm).where(
             LawFirm.law_firm_name.ilike(f"%{law_firm}%")
         )
     if limit is not None:
         query = query.limit(limit)
+
     return query.all()
 
 
 @app.get("/law_firms/", response_model=List[LawFirmModel])
 def read_law_firms(
+    response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     search: Optional[str] = Query(None, description="Law firm name to filter by"),
     db: Session = Depends(get_db),
@@ -356,6 +385,11 @@ def read_law_firms(
         query = query.where(LawFirm.law_firm_name.ilike(f"%{search}%"))
     if limit is not None:
         query = query.limit(limit)
+
+    if not query.all():
+        response.status_code = status.HTTP_200_OK
+        return JSONResponse({"message": f"No matching judges found with name {search}"})
+    
     return query.all()
 
 
