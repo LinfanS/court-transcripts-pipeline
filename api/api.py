@@ -339,7 +339,9 @@ def get_api_overview() -> JSONResponse:
 def read_courts(
     response: Response,
     request: Request,
-    limit: Optional[int] = Query(100, description="Limit the number of results"),
+    limit: Optional[int] = Query(
+        100, description="Limit the number of results, -1 for all, default 100 results"
+    ),
     search: Optional[str] = Query(None, description="Court name to filter by"),
     db: Session = Depends(get_db),
 ):
@@ -366,7 +368,9 @@ def read_courts(
 def read_judges(
     request: Request,
     response: Response,
-    limit: Optional[int] = Query(100, description="Limit the number of results"),
+    limit: Optional[int] = Query(
+        100, description="Limit the number of results, -1 for all, default 100 results"
+    ),
     search: Optional[str] = Query(None, description="Judge name to filter by"),
     db: Session = Depends(get_db),
 ):
@@ -393,7 +397,9 @@ def read_judges(
 def read_lawyers(
     request: Request,
     response: Response,
-    limit: Optional[int] = Query(100, description="Limit the number of results"),
+    limit: Optional[int] = Query(
+        100, description="Limit the number of results, -1 for all, default 100 results"
+    ),
     lawyer: Optional[str] = Query(None, description="Lawyer name to filter by"),
     law_firm: Optional[str] = Query(None, description="Law firm name to filter by"),
     db: Session = Depends(get_db),
@@ -427,7 +433,9 @@ def read_lawyers(
 def read_law_firms(
     request: Request,
     response: Response,
-    limit: Optional[int] = Query(100, description="Limit the number of results"),
+    limit: Optional[int] = Query(
+        100, description="Limit the number of results, -1 for all, default 100 results"
+    ),
     search: Optional[str] = Query(None, description="Law firm name to filter by"),
     db: Session = Depends(get_db),
 ):
@@ -454,7 +462,9 @@ def read_law_firms(
 def read_participants(
     request: Request,
     response: Response,
-    limit: Optional[int] = Query(100, description="Limit the number of results"),
+    limit: Optional[int] = Query(
+        100, description="Limit the number of results, -1 for all, default 100 results"
+    ),
     participant: Optional[str] = Query(
         None, description="Participant name to filter by"
     ),
@@ -503,7 +513,9 @@ def read_participants(
 def read_tags(
     request: Request,
     response: Response,
-    limit: Optional[int] = Query(100, description="Limit the number of results"),
+    limit: Optional[int] = Query(
+        100, description="Limit the number of results, -1 for all, default 100 results"
+    ),
     search: Optional[str] = Query(None, description="Tag name to filter by"),
     db: Session = Depends(get_db),
 ):
@@ -553,7 +565,9 @@ def read_court_cases(
     end_date: Optional[date] = Query(
         None, description="End date to filter by in the form YYYY-MM-DD"
     ),
-    limit: Optional[int] = Query(100, description="Limit the number of results"),
+    limit: Optional[int] = Query(
+        100, description="Limit the number of results, -1 for all, default 100 results"
+    ),
     db: Session = Depends(get_db),
 ):
     """API endpoint to get all columns for a court case with optional search and limit parameters"""
