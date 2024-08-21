@@ -317,8 +317,22 @@ def validate_query_params(params: dict, query_param_list: list):
 
 
 @app.get("/")
-def welcome_api():
-    return JSONResponse({"message": "Welcome to the Justice Lens API"})
+def get_api_overview():
+    return JSONResponse(
+        {
+            "message": "Welcome to the Justice Lens API",
+            "endpoints": {
+                "/courts/": "read_courts",
+                "/judges/": "read_judges",
+                "/lawyers/": "read_lawyers",
+                "/law_firms/": "read_law_firms",
+                "/participants/": "read_participants",
+                "/tags/": "read_tags",
+                "/verdicts/": "read_verdicts",
+                "/court_cases/": "read_court_cases",
+            },
+        }
+    )
 
 
 @app.get("/courts/")
