@@ -22,10 +22,6 @@ resource "aws_cloudwatch_log_group" "lambda_log_group" {
   retention_in_days = 14
 }
 
-resource "aws_ecr_repository" "real_lambda_ecr_repo" {
-  name = "c12-court-transcript-lambda-ecr"
-}
-
 resource "aws_ecr_repository" "lambda_ecr_repo" {
   name = "c12-court-transcript-ecr"
 }
