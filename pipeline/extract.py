@@ -9,7 +9,7 @@ def get_article_data(href: str) -> str:
     """Returns text contents of a single case by returning article tag contents"""
 
     base_url = "https://caselaw.nationalarchives.gov.uk"
-    page = requests.get(base_url + href, timeout=10)
+    page = requests.get(base_url + href, timeout=30)
 
     soup = BeautifulSoup(page.content, "html.parser")
     article_only = soup.article
@@ -88,7 +88,7 @@ def get_listing_data(
 
     url = url_no_page_num + str(page_num)
     base_url = "https://caselaw.nationalarchives.gov.uk"
-    page = requests.get(url, timeout=10)
+    page = requests.get(url, timeout=30)
 
     soup = BeautifulSoup(page.content, "html.parser")
 
@@ -108,55 +108,6 @@ def get_listing_data(
             judgments.append(judgment_data)
 
     return judgments
-
-
-# def get_listing_data(
-#     url_no_page_num: str, page_num: int, already_loaded=None
-# ) -> list[dict]:
-#     """Returns a list of dictionaries with the data for a given page number sorting by oldest"""
-
-#     url = url_no_page_num + str(page_num)
-#     base_url = "https://caselaw.nationalarchives.gov.uk"
-#     page = requests.get(url, timeout=10)
-
-#     soup = BeautifulSoup(page.content, "html.parser")
-
-#     ul_tag = soup.find("ul", class_="judgment-listing__list")
-
-#     if not ul_tag:
-#         return []
-#     list_items = ul_tag.find_all("li")
-
-#     judgments = []
-#     if not already_loaded:
-#         already_loaded = []
-
-#     for item in list_items:
-#         title_tag = item.find("span", class_="judgment-listing__title")
-#         court_tag = item.find("span", class_="judgment-listing__court")
-#         citation_tag = item.find("span", class_="judgment-listing__neutralcitation")
-#         date_tag = item.find("time", class_="judgment-listing__date")
-
-#         title = title_tag.get_text(strip=True) if title_tag else None
-#         href = title_tag.find("a")["href"] if title_tag and title_tag.find("a") else ""
-#         court = court_tag.get_text(strip=True) if court_tag else None
-#         citation = citation_tag.get_text(strip=True) if citation_tag else None
-#         date = date_tag.get("datetime") if date_tag else None
-
-#         if citation not in already_loaded:
-
-#             html_data = {
-#                 "title": title,
-#                 "url": base_url + href,
-#                 "court": court,
-#                 "citation": citation,
-#                 "date": date,
-#                 "text_raw": get_article_data(href),
-#             }
-#             if validate_html_data(html_data):
-#                 judgments.append(html_data)
-
-#     return judgments
 
 
 if __name__ == "__main__":
