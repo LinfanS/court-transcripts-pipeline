@@ -1,11 +1,6 @@
 "Script that will take the transformed data and load it to the rds"
 import pytest
-import unittest
 from bs4 import BeautifulSoup
-from bs4.element import Tag
-from datetime import datetime
-from unittest.mock import MagicMock, patch, call
-from psycopg2.extensions import connection
 from extract import get_article_data, get_max_page_num, validate_html_data, extract_judgment_data, get_listing_data
 
 #assuming the cases don't not get deleted
@@ -44,12 +39,6 @@ class TestGetData:
             assert get_article_data('') == "'NoneType' object has no attribute 'get_text'"
             #not error for this function but error later ^
     
-    # def test_wrong_href_not_exist(self):
-    #     with pytest.raises(ConnectionError) as err:
-    #         assert get_article_data('1234') == 'can only concatenate str (not "int") to str'
-    #     assert 'Failed to resolve' in get_article_data('1234')
-    #     assert type(get_article_data('1234')) == str
-    
 class TestMaxPage:
 
     @pytest.fixture
@@ -76,9 +65,6 @@ class TestMaxPage:
     def test_max_page_if_one_result(self):
         url = 'https://caselaw.nationalarchives.gov.uk/judgments/search?per_page=10&order=-date&query=&from_date_0=2&from_date_1=2&from_date_2=2003&to_date_0=3&to_date_1=2&to_date_2=2003&party=&judge=&page='
         assert get_max_page_num(url) == 1
-
-    # def test_max_page_empty_url(self):
-    #     assert 'Invalid URL' in get_max_page_num('') 
 
 class TestValidateHTML:
     
