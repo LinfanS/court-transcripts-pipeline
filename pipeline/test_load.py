@@ -28,15 +28,23 @@ class TestFindSynonyms:
         response = synonym_extractor('Achieve')
         assert 'Accomplish' in response
     
-    def test_wrong_format(self):
+    def test_wrong_format_empty(self):
         response = synonym_extractor('')
         assert len(response) == 0
+    
+    def test_wrong_format_int(self):
         response = synonym_extractor(3)
         assert len(response) == 0
+
+    def test_wrong_format_wrong_character(self):
         response = synonym_extractor('@')
         assert len(response) == 0
+    
+    def test_wrong_format_empty_bool(self):
         response = synonym_extractor(False)
         assert len(response) == 0
+
+    def test_wrong_format_empty_not_a_word(self):
         response = synonym_extractor('asdfghjkl')
         assert len(response) == 0
 
@@ -68,10 +76,16 @@ class TestRemoveSynonyms:
         assert len(set(list_without)) == len(set(response))
         assert len(list_without) == len(response)
     
-    def test_edge_cases(self):
+    def test_edge_cases_empty(self):
         assert len(replace_synonyms([''])) == len([''])
+    
+    def test_edge_cases_int(self):
         assert len(replace_synonyms([3])) == 0
+
+    def test_edge_cases_bool(self):
         assert len(replace_synonyms([False])) == 0
+    
+    def test_edge_cases_one_word(self):
         assert len(replace_synonyms(['hello'])) == 1
 
 
@@ -81,19 +95,39 @@ class TestReturnIds:
     def fake_map(self):
         return {'hello': 1, 'my': 2, 'name': 3, 'is': 4 }
     
-    def test_correct_ids(self, fake_map):
+    def test_correct_ids_single(self, fake_map):
         s_response = return_single_ids(fake_map, ('hello', 'name', 'my', 'is'))
-        m_response = return_multiple_ids(fake_map, (('hello', 'is'),('my',),('hello', 'my', 'name', 'is')))
         assert s_response == (1,3,2,4)
+
+    def test_correct_ids_multiple(self, fake_map):
+        m_response = return_multiple_ids(fake_map, (('hello', 'is'),('my',),('hello', 'my', 'name', 'is')))
         assert m_response == ((1,4),(2,),(1,2,3,4))
     
-    def test_edge_ids(self, fake_map):
+    def test_edge_ids_multiple_one(self, fake_map):
         assert return_multiple_ids(fake_map, (('hello',),)) == ((1,),)
+    
+    def test_edge_ids_single_empty(self, fake_map):
         assert return_single_ids(fake_map,()) == ()
     
-    def test_incorrect_id_formats(self, fake_map):
+    def test_edge_ids_multiple_empty(self, fake_map):
+        assert return_multiple_ids(fake_map,(('',),)) == ((None,),)
+    
+    def test_incorrect_id_formats_int_single(self, fake_map):
         assert return_single_ids(fake_map, (1,)) == (None,)
+    
+    def test_incorrect_id_formats_int_multiple(self, fake_map):
+        assert return_multiple_ids(fake_map, ((1,),)) == ((None,),)
+    
+    def test_incorrect_id_formats_bool_single(self, fake_map):
+        assert return_single_ids(fake_map, (False,)) == (None,)
+
+    def test_incorrect_id_formats_bool_multiple(self, fake_map):
         assert return_multiple_ids(fake_map, ((False,),)) == ((None,),)
+    
+    def test_incorrect_id_formats_one_word_single(self, fake_map):
+        assert return_single_ids(fake_map, ('goodbye',)) == (None,)
+
+    def test_incorrect_id_formats_one_word_multiple(self, fake_map):
         assert return_multiple_ids(fake_map, (('goodbye',),)) == ((None,),)
 
 
@@ -326,7 +360,6 @@ class TestDataProcessing:
     def test_empty_data_processing(self):
         people = [(('',('','')),('',('','')))]
         result = process_people_data(people)
-        print(result)
         assert len(result) == 3
         assert result[0][0] == [False, True]
 
