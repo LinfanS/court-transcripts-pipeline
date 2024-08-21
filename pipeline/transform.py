@@ -127,7 +127,7 @@ def get_data(html_data: list[dict], index: int) -> dict:
 
 def format_date(date_string: str) -> date:
     """Converts a date string to a date object"""
-    if not date_string:
+    if not date_string or not isinstance(date_string, str):
         return None
     clean_date_string = date_string.replace(", midnight", "")
     return datetime.strptime(clean_date_string, "%d %b %Y").date()
