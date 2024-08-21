@@ -4,7 +4,7 @@ allowing the user to filter court cases by various parameters"""
 from os import getenv
 from typing import List, Optional, Union
 from datetime import date
-from fastapi import FastAPI, Depends, Query, status, Response, HTTPException
+from fastapi import FastAPI, Depends, Query, status, Response, Request, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy import (
     Boolean,
@@ -302,6 +302,20 @@ def no_matches(response: Response, endpoint: str):
     )
 
 
+def validate_query_params(params: dict, query_param_list: list):
+    unsupported_params = [
+        query_param
+        for query_param in params.keys()
+        if query_param not in query_param_list
+    ]
+
+    if unsupported_params:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Query parameter(s) '{', '.join(unsupported_params)}' are not supported. Supported query parameters are {query_param_list}",
+        )
+
+
 @app.get("/")
 def welcome_api():
     return JSONResponse({"message": "Welcome to the Justice Lens API"})
@@ -310,11 +324,17 @@ def welcome_api():
 @app.get("/courts/")
 def read_courts(
     response: Response,
+    request: Request,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     search: Optional[str] = Query(None, description="Court name to filter by"),
     db: Session = Depends(get_db),
 ):
     """API endpoint to get court types with optional search and limit parameters"""
+
+    params = request.query_params
+    query_param_list = ["search", "limit"]
+    validate_query_params(params, query_param_list)
+
     query = db.query(Court)
     if search is not None:
         query = query.where(Court.court_name.ilike(f"%{search}%"))
@@ -330,12 +350,17 @@ def read_courts(
 
 @app.get("/judges/", response_model=List[JudgeModel])
 def read_judges(
+    request: Request,
     response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     search: Optional[str] = Query(None, description="Judge name to filter by"),
     db: Session = Depends(get_db),
 ):
     """API endpoint to get judge names with optional search and limit parameters"""
+    params = request.query_params
+    query_param_list = ["search", "limit"]
+    validate_query_params(params, query_param_list)
+
     query = db.query(Judge)
     if search is not None:
         query = query.where(Judge.judge_name.ilike(f"%{search}%"))
@@ -352,6 +377,7 @@ def read_judges(
 
 @app.get("/lawyers/", response_model=List[LawyerModel])
 def read_lawyers(
+    request: Request,
     response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     lawyer: Optional[str] = Query(None, description="Lawyer name to filter by"),
@@ -359,6 +385,10 @@ def read_lawyers(
     db: Session = Depends(get_db),
 ):
     """API endpoint to get lawyer and law firm names with optional search and limit parameters"""
+    params = request.query_params
+    query_param_list = ["lawyer", "law_firm", "limit"]
+    validate_query_params(params, query_param_list)
+
     query = db.query(Lawyer).options(selectinload(Lawyer.law_firm))
 
     if lawyer is not None:
@@ -381,12 +411,17 @@ def read_lawyers(
 
 @app.get("/law_firms/", response_model=List[LawFirmModel])
 def read_law_firms(
+    request: Request,
     response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     search: Optional[str] = Query(None, description="Law firm name to filter by"),
     db: Session = Depends(get_db),
 ):
     """API endpoint to get law firm names with optional search and limit parameters"""
+    params = request.query_params
+    query_param_list = ["search", "limit"]
+    validate_query_params(params, query_param_list)
+
     query = db.query(LawFirm)
     if search is not None:
         query = query.where(LawFirm.law_firm_name.ilike(f"%{search}%"))
@@ -403,6 +438,7 @@ def read_law_firms(
 
 @app.get("/participants/", response_model=List[ParticipantAssignmentWithCourtCaseModel])
 def read_participants(
+    request: Request,
     response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     participant: Optional[str] = Query(
@@ -414,6 +450,10 @@ def read_participants(
 ):
     """API endpoint to get participant names, lawyer and law firm with optional
     search and limit parameters"""
+    params = request.query_params
+    query_param_list = ["participant", "lawyer", "law_firm", "limit"]
+    validate_query_params(params, query_param_list)
+
     query = db.query(ParticipantAssignment).options(
         joinedload(ParticipantAssignment.participant),
         joinedload(ParticipantAssignment.lawyer).joinedload(Lawyer.law_firm),
@@ -447,12 +487,16 @@ def read_participants(
 
 @app.get("/tags/", response_model=List[TagModel])
 def read_tags(
+    request: Request,
     response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     search: Optional[str] = Query(None, description="Tag name to filter by"),
     db: Session = Depends(get_db),
 ):
     """API endpoint to get tag names with optional search and limit parameters"""
+    params = request.query_params
+    query_param_list = ["search", "limit"]
+    validate_query_params(params, query_param_list)
     query = db.query(Tag)
     if search is not None:
         query = query.where(Tag.tag_name.ilike(f"%{search}%"))
@@ -476,6 +520,7 @@ def read_verdicts(db: Session = Depends(get_db)):
 
 @app.get("/court_cases/", response_model=List[CourtCaseModel])
 def read_court_cases(
+    request: Request,
     response: Response,
     tag: Optional[str] = Query(None, description="Tag name to filter by"),
     judge: Optional[str] = Query(None, description="Judge name to filter by"),
@@ -498,6 +543,22 @@ def read_court_cases(
     db: Session = Depends(get_db),
 ):
     """API endpoint to get all columns for a court case with optional search and limit parameters"""
+    params = request.query_params
+    query_param_list = [
+        "tag",
+        "judge",
+        "participant",
+        "lawyer",
+        "law_firm",
+        "title",
+        "citation",
+        "verdict",
+        "court",
+        "start_date",
+        "end_date",
+        "limit",
+    ]
+    validate_query_params(params, query_param_list)
     query = db.query(CourtCase).options(
         selectinload(CourtCase.tags),
         selectinload(CourtCase.judges),
