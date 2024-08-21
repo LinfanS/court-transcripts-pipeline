@@ -293,13 +293,18 @@ class CourtCaseModel(BaseModel):
     class Config:
         orm_mode = True
 
-def no_matches(query_result: list, search: String, response: Response, endpoint: String):
-    if not query_result:
-        response.status_code = status.HTTP_200_OK
-        return JSONResponse({"message": f"No matching {endpoint} found for input: {search}"})
+
+def no_matches(response: Response, endpoint: str):
+    """Returns a JSON response with a message if no matches are found"""
+    response.status_code = status.HTTP_200_OK
+    return JSONResponse(
+        {"message": f"No matching {endpoint} found matching query parameters."}
+    )
+
 
 @app.get("/")
-def welcome_api(): return {"message": "Welcome to the Justice Lens api"}
+def welcome_api():
+    return JSONResponse({"message": "Welcome to the Justice Lens API"})
 
 
 @app.get("/courts/")
@@ -307,21 +312,20 @@ def read_courts(
     response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     search: Optional[str] = Query(None, description="Court name to filter by"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """API endpoint to get court types with optional search and limit parameters"""
     query = db.query(Court)
     if search is not None:
         query = query.where(Court.court_name.ilike(f"%{search}%"))
+
     if limit is not None:
         query = query.limit(limit)
 
     result = query.all()
-
     if not result:
-        return no_matches(result, search, response, endpoint="court name")
-    
-    return query.all()
+        return no_matches(response, "court names")
+    return result
 
 
 @app.get("/judges/", response_model=List[JudgeModel])
@@ -329,21 +333,21 @@ def read_judges(
     response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     search: Optional[str] = Query(None, description="Judge name to filter by"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """API endpoint to get judge names with optional search and limit parameters"""
     query = db.query(Judge)
     if search is not None:
-        query = query.where(Judge.judge_name.like(f"%{search}%"))
+        query = query.where(Judge.judge_name.ilike(f"%{search}%"))
+
     if limit is not None:
         query = query.limit(limit)
 
     result = query.all()
-
     if not result:
-        return no_matches(result, search, response, endpoint="judges")
-    
-    return query.all()
+        return no_matches(response, "judge names")
+
+    return result
 
 
 @app.get("/lawyers/", response_model=List[LawyerModel])
@@ -359,15 +363,18 @@ def read_lawyers(
 
     if lawyer is not None:
         query = query.where(Lawyer.lawyer_name.ilike(f"%{lawyer}%"))
-        result = query.all()
-        if not result:
-            return no_matches(result, lawyer, response)
+
     if law_firm is not None:
         query = query.join(Lawyer.law_firm).where(
             LawFirm.law_firm_name.ilike(f"%{law_firm}%")
         )
+
     if limit is not None:
         query = query.limit(limit)
+
+    result = query.all()
+    if not result:
+        return no_matches(response, "lawyer names")
 
     return query.all()
 
@@ -383,18 +390,20 @@ def read_law_firms(
     query = db.query(LawFirm)
     if search is not None:
         query = query.where(LawFirm.law_firm_name.ilike(f"%{search}%"))
+
     if limit is not None:
         query = query.limit(limit)
 
-    if not query.all():
-        response.status_code = status.HTTP_200_OK
-        return JSONResponse({"message": f"No matching judges found with name {search}"})
-    
-    return query.all()
+    result = query.all()
+    if not result:
+        return no_matches(response, "law firm names")
+
+    return result
 
 
 @app.get("/participants/", response_model=List[ParticipantAssignmentWithCourtCaseModel])
 def read_participants(
+    response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     participant: Optional[str] = Query(
         None, description="Participant name to filter by"
@@ -410,17 +419,16 @@ def read_participants(
         joinedload(ParticipantAssignment.lawyer).joinedload(Lawyer.law_firm),
     )
 
-    if limit is not None:
-        query = query.limit(limit)
-
     if participant is not None:
         query = query.join(ParticipantAssignment.participant).where(
             Participant.participant_name.ilike(f"%{participant}%")
         )
+
     if lawyer is not None:
         query = query.join(ParticipantAssignment.lawyer).where(
             Lawyer.lawyer_name.ilike(f"%{lawyer}%")
         )
+
     if law_firm is not None:
         query = (
             query.join(ParticipantAssignment.lawyer)
@@ -428,12 +436,18 @@ def read_participants(
             .where(LawFirm.law_firm_name.ilike(f"%{law_firm}%"))
         )
 
+    if limit is not None:
+        query = query.limit(limit)
+
     result = query.all()
+    if not result:
+        return no_matches(response, "participants")
     return result
 
 
 @app.get("/tags/", response_model=List[TagModel])
 def read_tags(
+    response: Response,
     limit: Optional[int] = Query(None, description="Limit the number of results"),
     search: Optional[str] = Query(None, description="Tag name to filter by"),
     db: Session = Depends(get_db),
@@ -442,20 +456,27 @@ def read_tags(
     query = db.query(Tag)
     if search is not None:
         query = query.where(Tag.tag_name.ilike(f"%{search}%"))
+
     if limit is not None:
         query = query.limit(limit)
-    return query.all()
+
+    result = query.all()
+    if not result:
+        return no_matches(response, "tag names")
+    return result
 
 
 @app.get("/verdicts/", response_model=List[VerdictModel])
 def read_verdicts(db: Session = Depends(get_db)):
     """API endpoint to get verdicts"""
     query = db.query(Verdict)
-    return query.all()
+    result = query.all()
+    return result
 
 
 @app.get("/court_cases/", response_model=List[CourtCaseModel])
 def read_court_cases(
+    response: Response,
     tag: Optional[str] = Query(None, description="Tag name to filter by"),
     judge: Optional[str] = Query(None, description="Judge name to filter by"),
     participant: Optional[str] = Query(
@@ -500,12 +521,14 @@ def read_court_cases(
             .join(ParticipantAssignment.participant)
             .where(Participant.participant_name.lower() == participant.lower())
         )
+
     if lawyer:
         query = (
             query.join(CourtCase.participant_assignments)
             .join(ParticipantAssignment.lawyer)
             .where(Lawyer.lawyer_name.ilike(f"%{lawyer}%"))
         )
+
     if law_firm:
         query = (
             query.join(CourtCase.participant_assignments)
@@ -513,6 +536,7 @@ def read_court_cases(
             .join(Lawyer.law_firm)
             .where(LawFirm.law_firm_name.ilike(f"%{law_firm}%"))
         )
+
     if title:
         query = query.where(CourtCase.title.ilike(f"%{title}%"))
 
@@ -536,8 +560,10 @@ def read_court_cases(
     if limit is not None:
         query = query.limit(limit)
 
-    court_cases = query.all()
-    return court_cases
+    result = query.all()
+    if not result:
+        return no_matches(response, "court cases")
+    return result
 
 
 if __name__ == "__main__":
