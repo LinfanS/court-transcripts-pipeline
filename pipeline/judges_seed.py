@@ -217,12 +217,7 @@ def upload_judges(conn: connection, judges: list[tuple]) -> None:
     """
     Uploads all the judges names to the database
     """
-    query = """
-            INSERT INTO judge(judge_name)
-            VALUES %s
-            ON CONFLICT DO NOTHING
-            ;
-    """
+    query = """INSERT INTO judge(judge_name) VALUES %s ON CONFLICT DO NOTHING;"""
     with conn.cursor(cursor_factory=RealDictCursor) as curs:
         execute_values(curs, query, standardise_judge_names(judges))
         conn.commit()
