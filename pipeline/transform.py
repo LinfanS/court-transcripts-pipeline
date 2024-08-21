@@ -4,6 +4,7 @@ website through ChatGPT into a format that can be loaded into a database"""
 from os import getenv
 from datetime import datetime, date
 from string import capwords
+import logging
 from ast import literal_eval
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -14,6 +15,7 @@ from extract import get_listing_data
 
 
 load_dotenv()
+logger = logging.getLogger("batch_pipeline")
 client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
 
 
@@ -51,11 +53,32 @@ def get_summary(prompt: str, transcript: str) -> ChatCompletion:
         ],
         temperature=0.1,  # low temperature to ensure the model doesn't diverge from the prompt
     )
-    print(completion.usage)
+    usage = completion.usage
+    completion_tokens = getattr(usage, "completion_tokens", 0)
+    prompt_tokens = getattr(usage, "prompt_tokens", 0)
+    total_tokens = getattr(usage, "total_tokens", 0)
+    cost = [completion_tokens, prompt_tokens, total_tokens]
+    logger.info("GPT-4o-mini usage cost: %s", cost)
     return completion
 
 
-def validate_gpt_response(data: dict) -> bool:
+def is_valid_participant(participant_dict: dict) -> bool:
+    """Check if the participant dict is valid"""
+    for key, value in participant_dict.items():
+        if not isinstance(key, (str, type(None))):
+            return False
+        if not isinstance(value, dict):
+            return False
+        for sub_key, sub_value in value.items():
+            if not isinstance(sub_key, (str, type(None))):
+                return False
+            if not isinstance(sub_value, (str, type(None))):
+                return False
+
+    return True
+
+
+def validate_gpt_response(gpt_response_dict: dict) -> bool:
     """Validates the data shape extracted from the GPT-4o-mini API"""
     expected_keys = {
         "verdict": str,
@@ -69,7 +92,7 @@ def validate_gpt_response(data: dict) -> bool:
     }
 
     for key, expected_type in expected_keys.items():
-        value = data.get(key)
+        value = gpt_response_dict.get(key)
         if value is None:
             return False
         if not isinstance(value, expected_type):
@@ -78,6 +101,10 @@ def validate_gpt_response(data: dict) -> bool:
             return False
         if isinstance(value, list) and len(value) == 0:
             return False
+        if isinstance(value, dict):
+            if not is_valid_participant(value):
+                return False
+
     return True
 
 
@@ -106,10 +133,10 @@ def format_date(date_string: str) -> date:
     return datetime.strptime(clean_date_string, "%d %b %Y").date()
 
 
-def convert_dict_to_tuple(data: dict) -> tuple:
+def convert_dict_to_tuple(participant_dict: dict) -> tuple:
     """Converts a claimant and defendant data dictionary to a tuple"""
     result = []
-    for outer_key, inner_dict in data.items():
+    for outer_key, inner_dict in participant_dict.items():
         if inner_dict is None:
             result.append((outer_key, (None, None)))
         else:
@@ -121,7 +148,7 @@ def convert_dict_to_tuple(data: dict) -> tuple:
     return flattened_result
 
 
-def assemble_data(data_list: list[dict]) -> dict:
+def assemble_data(data_list: list[dict], is_batch_pipeline: bool = False) -> dict:
     """Formats the combined data from into a single dictionary for load"""
     table_data = {
         "verdicts": [],
@@ -164,7 +191,10 @@ def assemble_data(data_list: list[dict]) -> dict:
                     )
                 )
             else:
-                print(f"Invalid GPT response: {data}")
+                logger.warning("Invalid GPT response: %s", data)
+                if is_batch_pipeline:
+                    with open("invalid_gpt_responses.txt", "a", encoding="utf-8") as f:
+                        f.write(str(data) + "\n")
 
     return table_data
 
