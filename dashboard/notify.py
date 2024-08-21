@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 
 
 def get_sns_client():
-
+    """
+    Returns an AWS SNS client.
+    """
     return client("sns",
 
                   region_name="eu-west-2",
@@ -15,6 +17,9 @@ def get_sns_client():
 
 
 def create_or_find_topic(client, subscription: str) -> str:
+    """
+    Create's new SNS topics if not already made and returns the matched topic if it has already been made.
+    """
     all_topics = client.list_topics()
     for topic_arn in all_topics["Topics"]:
         arn_parts = topic_arn['TopicArn'].split(":")
@@ -26,12 +31,18 @@ def create_or_find_topic(client, subscription: str) -> str:
 
 
 def create_email_subscription(client, email: str, topic_arn: str) -> str:
+    """
+    Subscribes an email to a topic.
+    """
     subscription = client.subscribe(
         TopicArn=topic_arn, Protocol="email", Endpoint=email)
     return subscription["SubscriptionArn"]
 
 
-def sub_to_topics(courts: list[str], client, email: str):
+def sub_to_topics(courts: list[str], client, email: str) -> None:
+    """
+    Subscribes a user's email to all courts selected as a list.
+    """
     for court in courts:
         name = ""
         name_parts = court.split(" ")
