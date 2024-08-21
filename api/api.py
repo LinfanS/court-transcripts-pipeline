@@ -331,6 +331,7 @@ def get_api_overview() -> JSONResponse:
                 "/verdicts/": "read_verdicts",
                 "/court_cases/": "read_court_cases",
             },
+            "limit": "This query parameter is on all endpoints except /verdicts/. Defaults to 100 matching cases, set to -1 for all matching cases",
         }
     )
 
