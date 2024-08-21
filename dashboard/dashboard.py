@@ -10,6 +10,8 @@ from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 from notify import get_sns_client, sub_to_topics
 
+load_dotenv()
+
 st.set_page_config(layout="wide")
 
 
