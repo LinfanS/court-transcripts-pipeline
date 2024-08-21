@@ -2,6 +2,7 @@
 
 from ast import literal_eval
 
+# pricing info available at https://openai.com/api/pricing/
 INPUT_COST_PER_MILLION_TOKENS = 0.15
 OUTPUT_COST_PER_MILLION_TOKENS = 0.60
 
@@ -22,6 +23,8 @@ def calculate_cost(file_name):
 
     output_cost = (output_tokens / 1000000) * OUTPUT_COST_PER_MILLION_TOKENS
     input_cost = (input_tokens / 1000000) * INPUT_COST_PER_MILLION_TOKENS
+    print(f"Output cost: ${output_cost:.2f}")
+    print(f"Input cost: ${input_cost:.2f}")
     total_cost = output_cost + input_cost
     total_cost_usd = f"${total_cost:.2f}"
     return total_cost_usd
