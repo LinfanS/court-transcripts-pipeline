@@ -2,7 +2,7 @@
 allowing the user to filter court cases by various parameters"""
 
 from os import getenv
-from typing import List, Optional, Union
+from typing import List, Optional
 from datetime import date
 from fastapi import FastAPI, Depends, Query, status, Response, Request, HTTPException
 from fastapi.responses import JSONResponse
@@ -294,7 +294,7 @@ class CourtCaseModel(BaseModel):
         orm_mode = True
 
 
-def no_matches(response: Response, endpoint: str):
+def no_matches(response: Response, endpoint: str) -> JSONResponse:
     """Returns a JSON response with a message if no matches are found"""
     response.status_code = status.HTTP_200_OK
     return JSONResponse(
@@ -302,7 +302,7 @@ def no_matches(response: Response, endpoint: str):
     )
 
 
-def validate_query_params(params: dict, query_param_list: list):
+def validate_query_params(params: dict, query_param_list: list) -> None:
     unsupported_params = [
         query_param
         for query_param in params.keys()
@@ -317,7 +317,7 @@ def validate_query_params(params: dict, query_param_list: list):
 
 
 @app.get("/")
-def get_api_overview():
+def get_api_overview() -> JSONResponse:
     return JSONResponse(
         {
             "message": "Welcome to the Justice Lens API",
