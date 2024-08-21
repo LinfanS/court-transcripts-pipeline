@@ -93,11 +93,11 @@ def handler(event: dict, context) -> None:
         logger.info("No new data to insert, exiting")
         return None
 
-    count = 0
+    cases_count = 0
     for page_num in range(1, max_page_num + 1):
         gpt_response = []
         data = get_listing_data(live_url, page_num, log)
-        count += len(data)
+        cases_count += len(data)
         for index, _ in enumerate(data):
             gpt_response.append(get_data(data, index))
         table_data = assemble_data(gpt_response)
