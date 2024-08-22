@@ -9,7 +9,7 @@ def get_article_data(href: str) -> str:
     """Returns text contents of a single case by returning article tag contents"""
 
     base_url = "https://caselaw.nationalarchives.gov.uk"
-    page = requests.get(base_url + href, timeout=10)
+    page = requests.get(base_url + href, timeout=30)
 
     soup = BeautifulSoup(page.content, "html.parser")
     article_only = soup.article
@@ -88,7 +88,7 @@ def get_listing_data(
 
     url = url_no_page_num + str(page_num)
     base_url = "https://caselaw.nationalarchives.gov.uk"
-    page = requests.get(url, timeout=10)
+    page = requests.get(url, timeout=30)
 
     soup = BeautifulSoup(page.content, "html.parser")
 
