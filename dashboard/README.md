@@ -16,7 +16,7 @@ or run the command `streamlit run dashboard.py` in your terminal. The latter wil
 (we recommend you save these in a **local** .env file)
 ```python
 DB_HOST #the endpoint to your (RDS) database
-DB_PORT #port number that you want to conenct ot
+DB_PORT #port number that you want to connect to
 DB_NAME #name of your database
 DB_USER #your username
 DB_PASSWORD #your password

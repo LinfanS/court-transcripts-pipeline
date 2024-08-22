@@ -668,13 +668,13 @@ def tabs():
 
 
 def display():
-    col0, col1, col2, col3 = st.columns([1, 3.5, 4, 2.5])
-    with col1:
-        st.image("justicelens.jpg", width=150)
+    col0, col1, col2, col3 = st.columns([1, 3, 4, 2.5])
+    # with col1:
+    #     st.image("justicev4.png", width=150)
     with col2:
         st.markdown('<h1>Justice Lens</h1>', unsafe_allow_html=True)
     with col3:
-        st.image("justicelens.jpg", width=150)
+        st.image("justicev4.png", width=150)
     col5, col6, col7 = st.columns([1, 9, 1])
     with col6:
         tabs()
