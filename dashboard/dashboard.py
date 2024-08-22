@@ -551,8 +551,9 @@ def draw_line(data:pd.DataFrame, field: str, filter_title: str):
     return alt.Chart(data).mark_line(opacity=1, thickness=0.01).encode(
         x=alt.X('court_date:T', title='Date of the Case'),
         y=alt.Y('overall_sum:Q', title='Case Count'),
-        color=alt.Color(field, title=filter_title.title()),
-        tooltip=[field, 'overall_sum']
+        color=alt.Color(filter, title=filter_title.title(),
+                        legend=alt.Legend(orient="top")),
+        tooltip=[filter, 'overall_sum']
     )
 
 
@@ -719,7 +720,7 @@ def tabs():
                             help="Note - This is only showing the 12 most popular tags")
                 court_tag_df = get_court_data_tags(cnx)
                 st.write(plot_filter_pie(court_tag_df,
-                                            selected_court, 'tag_name', 'court_name', 'Tag'))
+                                         selected_court, 'tag_name', 'court_name', 'Tag'))
             with col4:
                 st.markdown(
                     f"""<h6>Judge distribution for {selected_court}</h6>""", unsafe_allow_html=True,
@@ -759,7 +760,7 @@ def display():
     with col1:
         pass
     with col2:
-        st.markdown('<h1>Justice Lens</h1>', unsafe_allow_html=True)
+        st.markdown('<h1>JusticeLens</h1>', unsafe_allow_html=True)
     with col3:
         st.image("justicev4.png", width=150)
     col5, col6, col7 = st.columns([1, 9, 1])

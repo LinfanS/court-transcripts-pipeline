@@ -22,9 +22,17 @@ DB_USER #your username
 DB_PASSWORD #your password
 ```
 
-## What to expect
-- Wireframe
-- Graphs and why
-- Subscriptions
 
-## Other implementations and features
+## Wireframe
+
+![alt text](image.png)
+
+## Dashboard elements
+
+- The dashboard contains a range of graphs showing visualisations of the distribution of cases over semantic tags, different verdicts, judges and courts. Also line graphs showing the accumulation of court cases over time with multiple filters.
+
+- You can also search through all the cases in the database to see key information about each case.
+
+- There is also an option to subscribe to specific courts so that you receive an email notification when a case from one of your subscribed courts is uploaded.
+
+
