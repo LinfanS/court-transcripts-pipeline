@@ -404,7 +404,7 @@ def get_cases_over_time(conn: connection):
     return pd.DataFrame(result)
 
 
-def filtered_cases_over_time(conn: connection, filter: tuple):
+def filtered_cases_over_time_by_courts(conn: connection, filter: tuple):
     """
     Retrieves cases over time but filters by courts
     """
@@ -417,6 +417,27 @@ def filtered_cases_over_time(conn: connection, filter: tuple):
                     ORDER BY cc.court_date)
                 SELECT * FROM original_data
                 WHERE court_name IN %s;
+    """
+    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+        curs.execute(query, (tuple(filter),))
+        result = curs.fetchall()
+    return pd.DataFrame(result)
+
+
+def filtered_cases_over_time_by_judges(conn: connection, filter: tuple):
+    """
+    Retrieves cases over time but filters by judges
+    """
+    query = """
+                WITH original_data AS(
+                    SELECT cc.court_date, j.judge_name, COUNT(*) as case_count
+                    FROM court_case as cc
+                    JOIN judge_assignment as ja ON ja.court_case_id = cc.court_case_id
+                    JOIN judge as j ON j.judge_id = ja.judge_id
+                    GROUP BY cc.court_date, j.judge_name
+                    ORDER BY cc.court_date)
+                SELECT * FROM original_data
+                WHERE judge_name IN %s;
     """
     with conn.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query, (tuple(filter),))
@@ -444,14 +465,16 @@ def plot_pie(df: pd.DataFrame, filter: str, name: str):
     """
     Altair pie chart that displays the distribution of a filter (one of judge, tag or court type)
     """
-    colour=alt.Color(field=filter, type='nominal',title=name).scale(scheme='paired')
+    colour = alt.Color(field=filter, type='nominal',
+                       title=name).scale(scheme='paired')
     if name == 'Verdict':
         domain = ['Guilty', 'Dismissed', 'Acquitted', 'Claimant Wins', 'Defendant Wins', 'Struck Out',
                   'Appeal Dismissed', 'Appeal Allowed', 'Other']
         range = ['#880808', '#efc800', '#006600 ', '#009900', '#00CC00', '#ff6f00', '#ff000d', '#89CFF0', '#BF40BF']
 
-        colour=alt.Color(field=filter, type='nominal',title=name).scale(domain=domain, range=range)
-        
+        colour = alt.Color(field=filter, type='nominal',
+                           title=name).scale(domain=domain, range=range)
+
     aggregated_data = df.groupby(filter).sum().reset_index()
     aggregated_data = aggregated_data.sort_values(
         'count', ascending=False).head(12)
@@ -500,11 +523,11 @@ def draw_line(data):
     )
 
 
-def select_court(df: pd.DataFrame):
+def select_filter(df: pd.DataFrame, filter: str, filter_title: str):
     graph = list()
-    for i in set(df['court_name']):
-        graph.append(draw_line(df[df['court_name'] == i]))
-    return alt.layer(*graph).properties(title='How the total amount of court hearings compare over different court types over time').interactive()
+    for i in set(df[filter]):
+        graph.append(draw_line(df[df[filter] == i], filter, filter_title))
+    return alt.layer(*graph).properties(title=f'How the total amount of {filter_title} hearings compare over different {filter_title}s over time').interactive()
 
 
 def subscribe_to_court(courts: list):
@@ -529,7 +552,7 @@ def tabs():
     load_dotenv()
     conn = get_connection()
     insights, filtered_insights, comparisons, cases, subscribe = st.tabs(
-        ["General Insights","Filtered Insights", "Court Comparisons", "Cases", "Subscribe"])
+        ["General Insights", "Filtered Insights", "Court Comparisons", "Cases", "Subscribe"])
 
     with cases:
         # col1, col2, col3 = st.columns([1,8,1])
