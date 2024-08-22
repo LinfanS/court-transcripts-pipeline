@@ -302,8 +302,9 @@ class TestGPTResponses:
 
 class TestGetSummary(unittest.TestCase):
 
-    def test_summary(self):
-        mock_client = MagicMock()
+    @patch("transform.OpenAI")
+    def test_summary(self, MockOpenAI):
+        mock_client = MockOpenAI.return_value
         mock_client.chat.completions.create.return_value = MagicMock(
             usage=MagicMock(completion_tokens=5, prompt_tokens=10, total_tokens=15)
         )
