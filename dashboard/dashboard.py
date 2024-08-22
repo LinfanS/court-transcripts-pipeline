@@ -434,9 +434,9 @@ def plot_filter_pie(df: pd.DataFrame, selected_filter: str, filter: str, tab: st
         'count', ascending=False).head(12)
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
         theta=alt.Theta(field='count', type='quantitative'),
-        color=alt.Color(field=filter, type='nominal', title=name),
+        color=alt.Color(field=filter, type='nominal', title=name).scale(scheme="paired"),
         tooltip=[filter, 'count']
-    ).properties(width=500).mark_arc(outerRadius=100)
+    ).properties(width=500).mark_arc(outerRadius=130)
     return pie_chart
 
 
@@ -448,20 +448,20 @@ def plot_pie(df: pd.DataFrame, filter: str, name: str):
     if name == 'Verdict':
         domain = ['Guilty', 'Dismissed', 'Acquitted', 'Claimant Wins', 'Defendant Wins', 'Struck Out',
                   'Appeal Dismissed', 'Appeal Allowed', 'Other']
-        range = ['#FF3131', '#efc800', '#006600 ', '#009900', '#00CC00', '#ff6f00', '#ff000d', '#89CFF0', '#BF40BF']
+        range = ['#880808', '#efc800', '#006600 ', '#009900', '#00CC00', '#ff6f00', '#ff000d', '#89CFF0', '#BF40BF']
 
         colour=alt.Color(field=filter, type='nominal',title=name).scale(domain=domain, range=range)
         
     aggregated_data = df.groupby(filter).sum().reset_index()
     aggregated_data = aggregated_data.sort_values(
         'count', ascending=False).head(12)
-    pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
-        theta=alt.Theta(field='count', type='quantitative', title='Count').stack(True),
+    title = alt.TitleParams(f"{name} Distribution", anchor='start')
+    pie_chart = alt.Chart(aggregated_data, title=title).mark_arc().encode(
+        theta=alt.Theta(field='count', type='quantitative', title='Count'),
         color=colour,
         tooltip=[filter, 'count'],
-        #order=alt.Order('count', sort='descending')
-    ).properties(
-        title=f"{name} Distribution", width=500, height=400).mark_arc(outerRadius=130)
+
+    ).properties(width=500, height=400).mark_arc(outerRadius=130)
     
     return pie_chart
 
@@ -483,42 +483,19 @@ def plot_filter_pie_tags(df: pd.DataFrame, selected_filter: list[str], filter: s
 
 
 def plot_cases_over_months(df: pd.DataFrame):
-    title = alt.TitleParams('Cases Heard, Aggregated per Month', anchor='middle')
+    title = alt.TitleParams('Cases Heard, Aggregated per Month', anchor='start')
     return alt.Chart(df.reset_index(), title=title).mark_bar().encode(
         x=alt.X('month', title='Month', sort=None,
                 axis=alt.Axis(labelAngle=0)),
         y=alt.Y('case_count', title='Case Count')).properties(width=450, height=400)
 
 
-def plot_cases_over_months_per_court(df: pd.DataFrame):
-    return alt.Chart(df.reset_index()).mark_line().encode(
-        x=alt.X('court_date:T', title='Case Date'),
-        y=alt.Y('overall_sum:Q', title='Case Count')).properties(title='Cases per court type over time').configure_title(anchor='middle').interactive()
-
-
-def multiple_courts(df: pd.DataFrame):
-    click = alt.selection_multi(encodings=['color'])
-
-    scatter = alt.Chart(df).mark_line().encode(
-        x='court_date:T',
-        y='case_count:Q',
-        color=alt.Color('court_name:N').scale(scheme='rainbow')).transform_filter(click).interactive()
-
-    hist = alt.Chart(df).mark_bar().encode(
-        x='count()',
-        y='court_name',
-        color=alt.condition(click, 'court_name', alt.value('viridis'))).add_selection(click)
-
-    return scatter & hist
-
-
 def draw_line(data):
     data.loc[:, 'overall_sum'] = data['case_count'].cumsum()
     return alt.Chart(data).mark_line(opacity=0.5, thickness=0.01).encode(
-        # axis=alt.Axis(format="%d/%m", title='Day/Hour')),
         x=alt.X('court_date:T'),
         y=alt.Y('overall_sum:Q', title='Case Count'),
-        color='court_name',
+        color=alt.Color('court_name', title='Court'),
         tooltip=['court_name', 'overall_sum']
     )
 
@@ -538,7 +515,7 @@ def subscribe_to_court(courts: list):
     st.markdown(
         """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
     courts = st.multiselect(
-        "Select a court", courts, label_visibility="hidden", placeholder='Choose courts to include')
+        "Select a court", courts, label_visibility="visible", placeholder='Choose courts to include')
     if st.button("Subscribe"):
         if email and courts:
             sns_client = get_sns_client()
@@ -592,9 +569,10 @@ def tabs():
             """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
         all_choices = list(set(get_court_data_judges(conn)['court_name']))
         court_choice = st.multiselect('Select a court to display', all_choices, default=[
-                                      "High Court (Queen's Bench Division)", "High Court (King's Bench Division)"], help='Abbreviated. HC = High Court, CoA = Court of Appeal')
-        st.altair_chart(select_court(filtered_cases_over_time(
-            conn, (court_choice))), use_container_width=True)
+                                      "High Court (Queen's Bench Division)", "High Court (King's Bench Division)"], placeholder='Select a court to include in the diagram')
+        if court_choice:
+            st.altair_chart(select_court(filtered_cases_over_time(
+                conn, (court_choice))), use_container_width=True)
 
 
     with filtered_insights:
@@ -611,15 +589,15 @@ def tabs():
         with col2:
             if filter == "Judge":
                 selected_judge = st.selectbox(
-                    "Select a judge", judges, label_visibility="hidden")
+                    "Select the judge to be displayed", judges, label_visibility="visible")
             if filter == "Court name":
                 selected_court = st.selectbox(
-                    "Select a court", courts, label_visibility="hidden")
+                    "Select the court to be displayed", courts, label_visibility="visible")
             if filter == "Tag":
                 st.markdown(
                     """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
                 selected_tags = st.multiselect(
-                    "Select a tag", tags, label_visibility="hidden", placeholder='Choose tags to include', default='Patents')
+                    "Select tag(s) to be included", tags, label_visibility="visible", placeholder='Choose tags', default='Patents')
         st.subheader('')
         if filter == "Judge":
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
