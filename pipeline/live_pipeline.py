@@ -10,6 +10,7 @@ import nltk
 from extract import get_listing_data, get_max_page_num
 from transform import get_data, assemble_data
 from load import get_connection, insert_to_database
+from send_emails import get_sns_client, send_emails
 
 FILE_NAME = "log.json"
 BUCKET_NAME = "c12-court-transcripts"
@@ -84,6 +85,7 @@ def handler(event: dict, context) -> None:
     nltk.data.path.append("./tmp")
     logger = initialise_logger()
     aws_client = get_client()
+    sns_client = get_sns_client()
     log_json = read_from_json(aws_client)
     log_date, log = extract_log_and_date(log_json)
     live_url = construct_live_url(log_date)
@@ -101,6 +103,7 @@ def handler(event: dict, context) -> None:
         for index, _ in enumerate(data):
             gpt_response.append(get_data(data, index))
         table_data = assemble_data(gpt_response)
+        send_emails(table_data, sns_client)
         conn = get_connection()
         insert_to_database(conn, table_data)
         log += [d.get("citation") for d in data]
