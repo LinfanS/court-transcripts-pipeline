@@ -139,12 +139,23 @@ class TestDataWriteFile(unittest.TestCase):
 
 class TestAllData:
 
-    def test_all(self, example_data):
-        with patch("transform.get_summary") as mock_get_summary:
-            mock_get_summary.return_value.choices[0].message.content = (
-                "{valid: string dict}"
-            )
-            result = get_data(example_data, 1)
+    @patch("transform.get_summary")
+    @patch("transform.shorten_text_by_tokens")
+    @patch("transform.prompts")
+    def test_get_data(
+        self, mock_prompts, mock_shorten_text_by_tokens, mock_get_summary
+    ):
+        mock_prompts.USER_MESSAGE = "User: "
+        mock_prompts.SYSTEM_MESSAGE = "System: "
+        mock_shorten_text_by_tokens.return_value = "shortened text"
+        mock_summary = MagicMock()
+        mock_summary.choices = [
+            MagicMock(message=MagicMock(content='{"valid": "string dict"}'))
+        ]
+        mock_get_summary.return_value = mock_summary
+        html_data = [{"text_raw": "Some raw text", "other_key": "other_value"}]
+        result = get_data(html_data, 0)
+
         assert isinstance(result, dict)
 
     def test_get_data_syntax_error(self):
