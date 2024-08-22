@@ -564,7 +564,7 @@ def draw_line(data, filter: str, filter_title: str):
     return alt.Chart(data).mark_line(opacity=0.5, thickness=0.01).encode(
         # axis=alt.Axis(format="%d/%m", title='Day/Hour')),
         x=alt.X('court_date:T'),
-        y=alt.Y('overall_sum:Q', title=filter_title),
+        y=alt.Y('overall_sum:Q', title='Case Count'),
         color=alt.Color(filter, title=filter_title.title()),
         tooltip=[filter, 'overall_sum']
     )
@@ -681,20 +681,20 @@ def tabs():
                         selected_judge, "Lord Sales"])
                 st.altair_chart(select_filter(filtered_cases_over_time_by_judges(
                     conn, (judge_choice)), 'judge_name', 'judge'), use_container_width=True)
-            
+
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
             with col2:
                 st.markdown(f"""<h6>Tag distribution for Judge {
                             selected_judge}</h6>""", unsafe_allow_html=True, help="Note - to make the graphs more useful, they only show the 12 most popular tags")
                 judge_tag_df = get_judge_chart_data_tag(conn)
                 st.write(plot_filter_pie(judge_tag_df,
-                                            selected_judge, 'tag_name', 'judge_name', 'Tag'))
+                                         selected_judge, 'tag_name', 'judge_name', 'Tag'))
             with col4:
                 st.markdown(f"""<h6>Court distribution for Judge {
                             selected_judge}</h6>""", unsafe_allow_html=True)
                 judge_court_df = get_judge_data_court_type(conn)
                 st.write(plot_filter_pie(judge_court_df,
-                                            selected_judge, 'court_name', 'judge_name', 'Court'))
+                                         selected_judge, 'court_name', 'judge_name', 'Court'))
 
         if filter == "Court name":
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
