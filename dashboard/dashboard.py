@@ -565,7 +565,8 @@ def draw_line(data, filter: str, filter_title: str):
         # axis=alt.Axis(format="%d/%m", title='Day/Hour')),
         x=alt.X('court_date:T', title='Date of the Case'),
         y=alt.Y('overall_sum:Q', title='Case Count'),
-        color=alt.Color(filter, title=filter_title.title()),
+        color=alt.Color(filter, title=filter_title.title(),
+                        legend=alt.Legend(orient="top")),
         tooltip=[filter, 'overall_sum']
     )
 
@@ -634,7 +635,6 @@ def tabs():
                                                       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
                 st.altair_chart(plot_cases_over_months(case_count_df))
 
-
     with filtered_insights:
         col1, col2 = st.columns([0.4, 1])
         with col1:
@@ -678,7 +678,7 @@ def tabs():
                 if judge_choice:
                     st.altair_chart(select_filter(filtered_cases_over_time_by_judges(
                         conn, (judge_choice)), 'judge_name', 'Judge'), use_container_width=True)
-            
+
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
             with col2:
                 st.markdown(f"""<h6>Tag distribution for Judge {
@@ -698,9 +698,10 @@ def tabs():
             with col2:
                 st.markdown(
                     """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
-                all_choices = list(set(get_court_data_judges(conn)['court_name']))
+                all_choices = list(
+                    set(get_court_data_judges(conn)['court_name']))
                 court_choice = st.multiselect('Select courts to display', all_choices, default=[
-                                            "High Court (Queen's Bench Division)", "High Court (King's Bench Division)"])
+                    "High Court (Queen's Bench Division)", "High Court (King's Bench Division)"])
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.5, 5, 0.1])
             with col4:
                 st.markdown(f"""<h6>Verdict distribution for {
@@ -712,21 +713,20 @@ def tabs():
                 if court_choice:
                     st.altair_chart(select_filter(filtered_cases_over_time_by_courts(
                         conn, (court_choice)), 'court_name', 'court'), use_container_width=True)
-                
+
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
             with col2:
                 st.markdown(f"""<h6>Tag distribution for {
                             selected_court}</h6>""", unsafe_allow_html=True, help="Note - to make the graphs more useful, they only show the 12 most popular tags")
                 court_tag_df = get_court_data_tags(conn)
                 st.write(plot_filter_pie(court_tag_df,
-                                            selected_court, 'tag_name', 'court_name', 'Tag'))
+                                         selected_court, 'tag_name', 'court_name', 'Tag'))
             with col4:
                 st.markdown(f"""<h6>Judge distribution for {
                             selected_court}</h6>""", unsafe_allow_html=True, help="Note - to make the graphs more useful, they only show the 12 most popular judges")
                 court_judge_df = get_court_data_judges(conn)
                 st.write(plot_filter_pie(court_judge_df,
                                          selected_court, 'judge_name', 'court_name', 'Judge'))
-            
 
         if filter == "Tag":
             if selected_tags:
@@ -755,7 +755,7 @@ def display():
     # with col1:
     #     st.image("justicev4.png", width=150)
     with col2:
-        st.markdown('<h1>Justice Lens</h1>', unsafe_allow_html=True)
+        st.markdown('<h1>JusticeLens</h1>', unsafe_allow_html=True)
     with col3:
         st.image("justicev4.png", width=150)
     col5, col6, col7 = st.columns([1, 9, 1])

@@ -27,4 +27,12 @@ DB_PASSWORD #your password
 - Graphs and why
 - Subscriptions
 
+## Wireframe
+
+![alt text](image.png)
+
+## Insights from the dashboard
+
+
+
 ## Other implementations and features
