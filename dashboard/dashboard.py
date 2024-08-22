@@ -445,6 +445,27 @@ def filtered_cases_over_time_by_judges(conn: connection, filter: tuple):
     return pd.DataFrame(result)
 
 
+def filtered_cases_over_time_by_tags(conn: connection, filter: tuple):
+    """
+    Retrieves cases over time but filters by tags
+    """
+    query = """
+                WITH original_data AS(
+                    SELECT cc.court_date, t.tag_name, COUNT(*) as case_count
+                    FROM court_case as cc
+                    JOIN tag_assignment as ta ON ta.court_case_id = cc.court_case_id
+                    JOIN tag as t ON t.tag_id = ta.tag_id
+                    GROUP BY cc.court_date, t.tag_name
+                    ORDER BY cc.court_date)
+                SELECT * FROM original_data
+                WHERE tag_name IN %s;
+    """
+    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+        curs.execute(query, (tuple(filter),))
+        result = curs.fetchall()
+    return pd.DataFrame(result)
+
+
 def plot_filter_pie(df: pd.DataFrame, selected_filter: str, filter: str, tab: str, name: str):
     """
     Altair pie chart that displays the distribution of a field based on another (eg dist of verdict based on a given judge)
@@ -660,16 +681,16 @@ def tabs():
                 st.write(plot_filter_pie(judge_tag_df,
                                          selected_judge, 'tag_name', 'judge_name', 'Tag'))
             with col4:
-                st.markdown(f"""<h6>Court distribution for Judge {
-                            selected_judge}</h6>""", unsafe_allow_html=True)
-                judge_court_df = get_judge_data_court_type(conn)
-                st.write(plot_filter_pie(judge_court_df,
-                                         selected_judge, 'court_name', 'judge_name', 'Court'))
                 judge_choice = st.multiselect(
                     'Select a judge to display', judges, default=[
                         selected_judge, "Lord Sales"])
                 st.altair_chart(select_filter(filtered_cases_over_time_by_judges(
                     conn, (judge_choice)), 'judge_name', 'judge'), use_container_width=True)
+                st.markdown(f"""<h6>Court distribution for Judge {
+                            selected_judge}</h6>""", unsafe_allow_html=True)
+                judge_court_df = get_judge_data_court_type(conn)
+                st.write(plot_filter_pie(judge_court_df,
+                                         selected_judge, 'court_name', 'judge_name', 'Court'))
 
         if filter == "Court name":
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
@@ -693,6 +714,8 @@ def tabs():
 
         if filter == "Tag":
             if selected_tags:
+                st.altair_chart(select_filter(filtered_cases_over_time_by_tags(
+                    conn, (selected_tags)), 'tag_name', 'tag'), use_container_width=True)
                 col1, col2, col3 = st.columns([4, 3, 8])
                 with col1:
                     st.markdown('<h5>Grouped by verdict</h5>',
@@ -706,6 +729,7 @@ def tabs():
                     tag_judge_df = get_tag_data_judges(conn)
                     st.altair_chart(plot_filter_pie_tags(
                         tag_judge_df, selected_tags, 'judge_name', 'tag_name', 'Judge'))
+
     with subscribe:
         subscribe_to_court(courts)
 
