@@ -140,7 +140,12 @@ class TestDataWriteFile(unittest.TestCase):
 class TestAllData:
 
     def test_all(self, example_data):
-        assert isinstance(get_data(example_data, 1), dict)
+        with patch("transform.get_summary") as mock_get_summary:
+            mock_get_summary.return_value.choices[0].message.content = (
+                "{valid: string dict}"
+            )
+            result = get_data(example_data, 1)
+        assert isinstance(result, dict)
 
     def test_get_data_syntax_error(self):
         html_data = [{"text_raw": "Some raw text"}]
@@ -198,7 +203,7 @@ class TestParticipants:
 
 class TestGPTResponses:
 
-    def test_valid_gpt_response(self, example_dict):
+    def test_valid_gpt_response(self, example_gpt_dict):
         example_gpt_dict = {
             "verdict": "My verdict",
             "summary": "My summary",
@@ -213,8 +218,6 @@ class TestGPTResponses:
                 "SOME OTHER WILSON & PARTNERS LIMITED": {"James Holland QC": None}
             },
         }
-
-    def test_valid_gpt_response(self, example_gpt_dict):
 
         assert validate_gpt_response(example_gpt_dict) == True
 
