@@ -665,6 +665,11 @@ def tabs():
                 judge_court_df = get_judge_data_court_type(conn)
                 st.write(plot_filter_pie(judge_court_df,
                                          selected_judge, 'court_name', 'judge_name', 'Court'))
+                judge_choice = st.multiselect(
+                    'Select a judge to display', judges, default=[
+                        selected_judge, "Lord Sales"])
+                st.altair_chart(select_filter(filtered_cases_over_time_by_judges(
+                    conn, (judge_choice)), 'judge_name', 'judge'), use_container_width=True)
 
         if filter == "Court name":
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
