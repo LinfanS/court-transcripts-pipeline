@@ -445,6 +445,26 @@ def filtered_cases_over_time_by_judges(conn: connection, filter: tuple):
     return pd.DataFrame(result)
 
 
+def filtered_cases_over_time(conn: connection, filter: tuple):
+    """
+    Retrieves cases over time but filters by courts
+    """
+    query = """
+                WITH original_data AS(
+                    SELECT cc.court_date, c.court_name, COUNT(*) as case_count
+                    FROM court_case as cc
+                    JOIN court as c ON c.court_id = cc.court_id
+                    GROUP BY cc.court_date, c.court_name
+                    ORDER BY cc.court_date)
+                SELECT * FROM original_data
+                WHERE court_name IN %s;
+    """
+    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+        curs.execute(query, (tuple(filter),))
+        result = curs.fetchall()
+    return pd.DataFrame(result)
+
+
 def plot_filter_pie(df: pd.DataFrame, selected_filter: str, filter: str, tab: str, name: str):
     """
     Altair pie chart that displays the distribution of a field based on another (eg dist of verdict based on a given judge)
@@ -528,6 +548,13 @@ def select_filter(df: pd.DataFrame, filter: str, filter_title: str):
     for i in set(df[filter]):
         graph.append(draw_line(df[df[filter] == i], filter, filter_title))
     return alt.layer(*graph).properties(title=f'How the total amount of {filter_title} hearings compare over different {filter_title}s over time').interactive()
+
+
+def select_court(df: pd.DataFrame):
+    graph = list()
+    for i in set(df['court_name']):
+        graph.append(draw_line(df[df['court_name'] == i]))
+    return alt.layer(*graph).properties(title='How the total amount of court hearings compare over different court types over time').interactive()
 
 
 def subscribe_to_court(courts: list):
@@ -625,18 +652,18 @@ def tabs():
         if filter == "Judge":
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
             with col2:
-                st.markdown(f"""<h6>Verdict distribution for Judge {
+                st.markdown(f"""<h6>Verdict Distribution for Judge {
                             selected_judge}</h6>""", unsafe_allow_html=True)
                 judge_verdict_df = get_judge_chart_data_verdict(conn)
                 st.write(plot_filter_pie(judge_verdict_df,
                                          selected_judge, 'verdict', 'judge_name', 'Verdict'))
-                st.markdown(f"""<h6>Tag distribution for Judge {
+                st.markdown(f"""<h6>Tag Distribution for Judge {
                             selected_judge}</h6>""", unsafe_allow_html=True, help="Note - to make the graphs more useful, they only show the 12 most popular tags")
                 judge_tag_df = get_judge_chart_data_tag(conn)
                 st.write(plot_filter_pie(judge_tag_df,
                                          selected_judge, 'tag_name', 'judge_name', 'Tag'))
             with col4:
-                st.markdown(f"""<h6>Court distribution for Judge {
+                st.markdown(f"""<h6>Court Distribution for Judge {
                             selected_judge}</h6>""", unsafe_allow_html=True)
                 judge_court_df = get_judge_data_court_type(conn)
                 st.write(plot_filter_pie(judge_court_df,
@@ -666,13 +693,13 @@ def tabs():
             if selected_tags:
                 col1, col2, col3 = st.columns([4, 3, 8])
                 with col1:
-                    st.markdown('<h5>Grouped by verdict</h5>',
+                    st.markdown('<h5>Grouped by Verdict</h5>',
                                 unsafe_allow_html=True)
                     tag_verdict_df = get_tag_data_verdict(conn)
                     st.altair_chart(plot_filter_pie_tags(tag_verdict_df,
                                                          selected_tags, 'verdict', 'tag_name', 'Verdict'))
                 with col3:
-                    st.markdown('<h5>Grouped by judge</h5>',
+                    st.markdown('<h5>Grouped by Judge</h5>',
                                 unsafe_allow_html=True, help="Note - to make the graphs more useful, they only show the 12 most popular judges")
                     tag_judge_df = get_tag_data_judges(conn)
                     st.altair_chart(plot_filter_pie_tags(
