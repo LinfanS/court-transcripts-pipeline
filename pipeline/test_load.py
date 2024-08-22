@@ -8,7 +8,10 @@ from load import synonym_extractor, replace_synonyms, return_single_ids, return_
 from load import get_verdict_mapping, get_court_mapping, get_tag_mapping, get_judge_mapping, get_law_firm_mapping, get_lawyer_mapping, get_participant_mapping
 from load import add_judges, add_tags, add_law_firms, add_participants, add_courts, process_people_data, replace_data, insert_to_database
 from load import populate_court_case, populate_judge_assignment, populate_tag_assignment, populate_lawyer, populate_participant_assignment
-#OOS: test get_connection or reset_schema and test multiple things at once or change to split into multiple functions
+import nltk
+# OOS: test get_connection or reset_schema and test multiple things at once or change to split into multiple functions
+
+nltk.download("wordnet")
 
 @pytest.fixture
 def fake_conn():
@@ -340,7 +343,7 @@ class TestInsertions(unittest.TestCase):
         result = insert_to_database(mock_conn, example_data)
         assert result == "all files have been uploaded successfully"
 
-        
+
 class TestDataProcessing:
 
     def test_people_data_processing(self):

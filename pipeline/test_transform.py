@@ -41,21 +41,6 @@ def example_dict():
         "people": [],
     }
 
-    return {
-        "verdicts": [],
-        "courts": [],
-        "case_ids": [],
-        "summ": [],
-        "title": [],
-        "date": [],
-        "number": [],
-        "url": [],
-        "v_sum": [],
-        "judges": [],
-        "tags": [],
-        "people": [],
-    }
-
 
 @pytest.fixture
 def example_gpt_dict():
