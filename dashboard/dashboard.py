@@ -444,16 +444,25 @@ def plot_pie(df: pd.DataFrame, filter: str, name: str):
     """
     Altair pie chart that displays the distribution of a filter (one of judge, tag or court type)
     """
+    colour=alt.Color(field=filter, type='nominal',title=name).scale(scheme='paired')
+    if name == 'Verdict':
+        domain = ['Guilty', 'Dismissed', 'Acquitted', 'Claimant Wins', 'Defendant Wins', 'Struck Out',
+                  'Appeal Dismissed', 'Appeal Allowed', 'Other']
+        range = ['#FF3131', '#efc800', '#006600 ', '#009900', '#00CC00', '#ff6f00', '#ff000d', '#89CFF0', '#BF40BF']
+
+        colour=alt.Color(field=filter, type='nominal',title=name).scale(domain=domain, range=range)
+        
     aggregated_data = df.groupby(filter).sum().reset_index()
     aggregated_data = aggregated_data.sort_values(
         'count', ascending=False).head(12)
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
-        theta=alt.Theta(field='count', type='quantitative', title='Count'),
-        color=alt.Color(field=filter, type='nominal',
-                        title=name).scale(scheme='paired'),
-        tooltip=[filter, 'count']
+        theta=alt.Theta(field='count', type='quantitative', title='Count').stack(True),
+        color=colour,
+        tooltip=[filter, 'count'],
+        #order=alt.Order('count', sort='descending')
     ).properties(
-        title=f"{name} distribution", width=500, height=400).mark_arc(outerRadius=100)
+        title=f"{name} Distribution", width=500, height=400).mark_arc(outerRadius=130)
+    
     return pie_chart
 
 
@@ -474,10 +483,11 @@ def plot_filter_pie_tags(df: pd.DataFrame, selected_filter: list[str], filter: s
 
 
 def plot_cases_over_months(df: pd.DataFrame):
-    return alt.Chart(df.reset_index(), title='Months where more cases were heard').mark_bar().encode(
+    title = alt.TitleParams('Cases Heard, Aggregated per Month', anchor='middle')
+    return alt.Chart(df.reset_index(), title=title).mark_bar().encode(
         x=alt.X('month', title='Month', sort=None,
                 axis=alt.Axis(labelAngle=0)),
-        y=alt.Y('case_count', title='Case Count')).properties(width=450, height=400).interactive()
+        y=alt.Y('case_count', title='Case Count')).properties(width=450, height=400)
 
 
 def plot_cases_over_months_per_court(df: pd.DataFrame):
@@ -541,14 +551,14 @@ def subscribe_to_court(courts: list):
 def tabs():
     load_dotenv()
     conn = get_connection()
-    cases, insights, filtered_insights, subscribe = st.tabs(
-        ["Cases", "General Insights", "Filtered Insights", "Subscribe"])
+    insights, filtered_insights, comparisons, cases, subscribe = st.tabs(
+        ["General Insights","Filtered Insights", "Court Comparisons", "Cases", "Subscribe"])
 
     with cases:
         # col1, col2, col3 = st.columns([1,8,1])
         # with col2:
         available_cases = get_case_titles(conn)
-        st.markdown("<h4>Court case summary: </h4>", unsafe_allow_html=True)
+        st.markdown("<h4>Court Case Summary</h4>", unsafe_allow_html=True)
         selected_case = st.selectbox("Court case summary: ", sorted(available_cases),
                                      placeholder='Select a case to be displayed', index=None,
                                      label_visibility="collapsed")
@@ -576,6 +586,8 @@ def tabs():
                 case_count_df = case_count_df.replace([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [
                                                       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
                 st.altair_chart(plot_cases_over_months(case_count_df))
+
+    with comparisons:
         st.markdown(
             """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
         all_choices = list(set(get_court_data_judges(conn)['court_name']))
@@ -583,6 +595,7 @@ def tabs():
                                       "High Court (Queen's Bench Division)", "High Court (King's Bench Division)"], help='Abbreviated. HC = High Court, CoA = Court of Appeal')
         st.altair_chart(select_court(filtered_cases_over_time(
             conn, (court_choice))), use_container_width=True)
+
 
     with filtered_insights:
         col1, col2 = st.columns([0.7, 1])
