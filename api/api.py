@@ -17,11 +17,18 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     create_engine,
+    func,
 )
-from sqlalchemy.orm import relationship, sessionmaker, Session, joinedload, selectinload
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import (
+    relationship,
+    sessionmaker,
+    Session,
+    joinedload,
+    selectinload,
+    declarative_base,
+)
 from sqlalchemy.ext.hybrid import hybrid_property
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from dotenv import load_dotenv
 import uvicorn
 
@@ -120,7 +127,7 @@ class CourtCase(Base):
     judges = relationship("Judge", secondary="judge_assignment")
     participants = relationship("Participant", secondary="participant_assignment")
     participant_assignments = relationship(
-        "ParticipantAssignment", back_populates="court_case"
+        "ParticipantAssignment", back_populates="court_case", overlaps="participants"
     )
 
 
@@ -147,9 +154,11 @@ class ParticipantAssignment(Base):
     )
     lawyer_id = Column(ForeignKey("lawyer.lawyer_id"))
     is_defendant = Column(Boolean)
-    court_case = relationship("CourtCase", back_populates="participant_assignments")
+    court_case = relationship(
+        "CourtCase", back_populates="participant_assignments", overlaps="participants"
+    )
     lawyer = relationship("Lawyer")
-    participant = relationship("Participant")
+    participant = relationship("Participant", overlaps="participants")
 
     @hybrid_property
     def participant_name(self):
@@ -199,8 +208,7 @@ class CourtModel(BaseModel):
 
     court_name: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class JudgeModel(BaseModel):
@@ -208,8 +216,7 @@ class JudgeModel(BaseModel):
 
     judge_name: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LawFirmModel(BaseModel):
@@ -217,8 +224,7 @@ class LawFirmModel(BaseModel):
 
     law_firm_name: Optional[str]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TagModel(BaseModel):
@@ -226,8 +232,7 @@ class TagModel(BaseModel):
 
     tag_name: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class VerdictModel(BaseModel):
@@ -235,8 +240,7 @@ class VerdictModel(BaseModel):
 
     verdict: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LawyerModel(BaseModel):
@@ -245,8 +249,7 @@ class LawyerModel(BaseModel):
     lawyer_name: Optional[str]
     law_firm: Optional[LawFirmModel]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ParticipantAssignmentModel(BaseModel):
@@ -257,8 +260,7 @@ class ParticipantAssignmentModel(BaseModel):
     lawyer_name: Optional[str]
     law_firm_name: Optional[str]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ParticipantAssignmentWithCourtCaseModel(BaseModel):
@@ -270,8 +272,7 @@ class ParticipantAssignmentWithCourtCaseModel(BaseModel):
     lawyer_name: Optional[str]
     law_firm_name: Optional[str]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourtCaseModel(BaseModel):
@@ -290,8 +291,7 @@ class CourtCaseModel(BaseModel):
     judges: List[JudgeModel]
     participant_assignments: List[ParticipantAssignmentModel]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 def no_matches(response: Response, endpoint: str) -> JSONResponse:
@@ -609,7 +609,7 @@ def read_court_cases(
         query = (
             query.join(CourtCase.participant_assignments)
             .join(ParticipantAssignment.participant)
-            .where(Participant.participant_name.lower() == participant.lower())
+            .where(func.lower(Participant.participant_name) == participant.lower())
         )
 
     if lawyer:
