@@ -685,13 +685,13 @@ def tabs():
                             selected_judge}</h6>""", unsafe_allow_html=True, help="Note - to make the graphs more useful, they only show the 12 most popular tags")
                 judge_tag_df = get_judge_chart_data_tag(conn)
                 st.write(plot_filter_pie(judge_tag_df,
-                                            selected_judge, 'tag_name', 'judge_name', 'Tag'))
+                                         selected_judge, 'tag_name', 'judge_name', 'Tag'))
             with col4:
                 st.markdown(f"""<h6>Court distribution for Judge {
                             selected_judge}</h6>""", unsafe_allow_html=True)
                 judge_court_df = get_judge_data_court_type(conn)
                 st.write(plot_filter_pie(judge_court_df,
-                                            selected_judge, 'court_name', 'judge_name', 'Court'))
+                                         selected_judge, 'court_name', 'judge_name', 'Court'))
 
         if filter == "Court name":
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.5, 5, 0.1])
