@@ -551,9 +551,9 @@ def draw_line(data:pd.DataFrame, field: str, filter_title: str):
     return alt.Chart(data).mark_line(opacity=1, thickness=0.01).encode(
         x=alt.X('court_date:T', title='Date of the Case'),
         y=alt.Y('overall_sum:Q', title='Case Count'),
-        color=alt.Color(filter, title=filter_title.title(),
+        color=alt.Color(field, title=filter_title.title(),
                         legend=alt.Legend(orient="top")),
-        tooltip=[filter, 'overall_sum']
+        tooltip=[field, 'overall_sum']
     )
 
 
@@ -576,7 +576,7 @@ def subscribe_to_court(courts: list):
         """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""",
         unsafe_allow_html=True)
     courts = st.multiselect(
-        "Select a court", courts, label_visibility="hidden", placeholder='Choose courts to include')
+        "Choose courts to include", courts, label_visibility="visible", placeholder='Select courts')
     if st.button("Subscribe"):
         if email and courts:
             sns_client = get_sns_client()
@@ -598,7 +598,7 @@ def tabs():
         # with col2:
         available_cases = get_case_titles(cnx)
         st.markdown("<h4>Court Case Summary</h4>", unsafe_allow_html=True)
-        selected_case = st.selectbox("Court case summary: ", sorted(available_cases),
+        selected_case = st.selectbox("Court case summary: ", sorted(list(set(available_cases))),
                                      placeholder='Select a case to be displayed', index=None,
                                      label_visibility="hidden")
         if selected_case:
@@ -667,7 +667,7 @@ def tabs():
                         selected_judge, "Lord Sales"])
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.5, 5, 0.1])
             with col4:
-                st.markdown(f"""<h6>Verdict distribution for Judge {
+                st.markdown(f"""<h6>Verdict Distribution for Judge {
                             selected_judge}</h6>""", unsafe_allow_html=True)
                 judge_verdict_df = get_judge_chart_data_verdict(cnx)
                 st.write(plot_filter_pie(judge_verdict_df,
@@ -679,14 +679,14 @@ def tabs():
 
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
             with col2:
-                st.markdown(f"""<h6>Tag distribution for Judge {
+                st.markdown(f"""<h6>Tag Distribution for Judge {
                             selected_judge}</h6>""", unsafe_allow_html=True,
                 help="Note - This is only showing the 12 most popular tags")
                 judge_tag_df = get_judge_chart_data_tag(cnx)
                 st.write(plot_filter_pie(judge_tag_df,
                                          selected_judge, 'tag_name', 'judge_name', 'Tag'))
             with col4:
-                st.markdown(f"""<h6>Court distribution for Judge {
+                st.markdown(f"""<h6>Court Distribution for Judge {
                             selected_judge}</h6>""", unsafe_allow_html=True)
                 judge_court_df = get_judge_data_court_type(cnx)
                 st.write(plot_filter_pie(judge_court_df,
@@ -703,7 +703,7 @@ def tabs():
                     "High Court (Queen's Bench Division)", "High Court (King's Bench Division)"])
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.5, 5, 0.1])
             with col4:
-                st.markdown(f"""<h6>Verdict distribution for {
+                st.markdown(f"""<h6>Verdict Distribution for {
                             selected_court}</h6>""", unsafe_allow_html=True)
                 court_verdict_df = get_court_data_verdict(cnx)
                 st.write(plot_filter_pie(court_verdict_df,
@@ -716,14 +716,14 @@ def tabs():
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
             with col2:
                 st.markdown(
-                    f"""<h6>Tag distribution for {selected_court}</h6>""", unsafe_allow_html=True,
+                    f"""<h6>Tag Distribution for {selected_court}</h6>""", unsafe_allow_html=True,
                             help="Note - This is only showing the 12 most popular tags")
                 court_tag_df = get_court_data_tags(cnx)
                 st.write(plot_filter_pie(court_tag_df,
                                          selected_court, 'tag_name', 'court_name', 'Tag'))
             with col4:
                 st.markdown(
-                    f"""<h6>Judge distribution for {selected_court}</h6>""", unsafe_allow_html=True,
+                    f"""<h6>Judge Distribution for {selected_court}</h6>""", unsafe_allow_html=True,
                     help="Note - This is only showing the 12 most popular judges")
                 court_judge_df = get_court_data_judges(cnx)
                 st.write(plot_filter_pie(court_judge_df,
