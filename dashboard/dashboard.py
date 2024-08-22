@@ -26,7 +26,7 @@ def get_connection() -> connection:
     )
 
 
-def get_judges(conn: connection) -> list[str]:
+def get_judges(cnx: connection) -> list[str]:
     """
     Retrieves a list of judges from the database
     """
@@ -35,7 +35,7 @@ def get_judges(conn: connection) -> list[str]:
             FROM judge_assignment as ja
             JOIN judge as j on j.judge_id = ja.judge_id;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     judges = []
@@ -45,7 +45,7 @@ def get_judges(conn: connection) -> list[str]:
     return judges
 
 
-def get_courts(conn: connection) -> list[str]:
+def get_courts(cnx: connection) -> list[str]:
     """
     Retrieves a list of courts from the database
     """
@@ -54,7 +54,7 @@ def get_courts(conn: connection) -> list[str]:
             FROM court as c
             JOIN court_case as cc ON c.court_id = cc.court_id;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     courts = []
@@ -64,29 +64,29 @@ def get_courts(conn: connection) -> list[str]:
     return courts
 
 
-def get_tags(conn: connection) -> list[str]:
+def get_tags(cnx: connection) -> list[str]:
     """
     Retrieves a list of tags from the database
     """
     query = """SELECT tag_name FROM tag;"""
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     return [row["tag_name"] for row in result]
 
 
-def get_case_titles(conn: connection) -> list[str]:
+def get_case_titles(cnx: connection) -> list[str]:
     """
     Retrieves a list of case titles from the database
     """
     query = """SELECT title FROM court_case;"""
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     return [row["title"] for row in result]
 
 
-def get_cases_info_for_case(conn: connection, title: str) -> dict:
+def get_cases_info_for_case(cnx: connection, title: str) -> dict:
     """
     Retrieves information that we want to display for each case
     """
@@ -97,13 +97,13 @@ def get_cases_info_for_case(conn: connection, title: str) -> dict:
             JOIN verdict as v ON v.verdict_id = cc.verdict_id
             WHERE cc.title = %s;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query, (title,))
         result = curs.fetchall()
     return result[0]
 
 
-def get_judges_for_case(conn: connection, title: str) -> list[str]:
+def get_judges_for_case(cnx: connection, title: str) -> list[str]:
     """
     Retrieves judge/judges that we want to display for each case
     """
@@ -114,13 +114,13 @@ def get_judges_for_case(conn: connection, title: str) -> list[str]:
             JOIN court_case as cc ON ja.court_case_id = cc.court_case_id
             WHERE cc.title = %s;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query, (title,))
         result = curs.fetchall()
     return [row["judge_name"] for row in result]
 
 
-def get_tags_for_case(conn: connection, title: str) -> list[str]:
+def get_tags_for_case(cnx: connection, title: str) -> list[str]:
     """
     Retrieves a list of tags from the database for a specific case
     """
@@ -131,13 +131,14 @@ def get_tags_for_case(conn: connection, title: str) -> list[str]:
             JOIN court_case as cc ON cc.court_case_id = ta.court_case_id
             WHERE cc.title = %s;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query, (title,))
         result = curs.fetchall()
     return [row["tag_name"] for row in result]
 
 
-def get_participants_and_lawyers_for_case(conn: connection, title: str, is_defendant: bool) -> list[dict]:
+def get_participants_and_lawyers_for_case(cnx: connection, title: str,
+                                          is_defendant: bool) -> list[dict]:
     """
     Retrieves a list of prosecutors from the database for a specific case
     """
@@ -151,13 +152,13 @@ def get_participants_and_lawyers_for_case(conn: connection, title: str, is_defen
             WHERE cc.title = %s 
             AND pa.is_defendant = %s;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query, (title, is_defendant))
         result = curs.fetchall()
     return result
 
 
-def format_participants_to_string(participants: list[dict], is_defendant: bool) -> str:
+def format_participants_to_string(participants: list[dict]) -> str:
     """
     Get all participants and format them to the desired html to then display
     """
@@ -192,27 +193,29 @@ def display_claimants_and_defendants(selected_case):
         prosecuting_participants = get_participants_and_lawyers_for_case(
             conn, selected_case, False)
         prosecuting_participants_html = format_participants_to_string(
-            prosecuting_participants, False)
+            prosecuting_participants)
         st.markdown(prosecuting_participants_html,
                     unsafe_allow_html=True)
+    with col2:
+        pass
     with col3:
         st.markdown("""<span style='color:white'>Defendants</span>""",
                     unsafe_allow_html=True)
         defending_participants = get_participants_and_lawyers_for_case(
             conn, selected_case, True)
         defending_participants_html = format_participants_to_string(
-            defending_participants, True)
+            defending_participants)
         st.markdown(defending_participants_html,
                     unsafe_allow_html=True)
 
 
-def format_case_presentation(conn: connection, title: str) -> str:
+def format_case_presentation(cnx: connection, title: str) -> str:
     """
     Code used to render how and what information will be displayed of each cases
     """
-    case_specific_info = get_cases_info_for_case(conn, title)
-    judges = get_judges_for_case(conn, title)
-    tags = get_tags_for_case(conn, title)
+    case_specific_info = get_cases_info_for_case(cnx, title)
+    judges = get_judges_for_case(cnx, title)
+    tags = get_tags_for_case(cnx, title)
     judges_str = ""
     for judge in judges:
         judges_str += judge + ", "
@@ -225,7 +228,8 @@ def format_case_presentation(conn: connection, title: str) -> str:
     col1, col2, col3 = st.columns([3, 3, 2])
     with col1:
         st.markdown(f"""**Case ID:** [{case_specific_info['court_case_id']}]({
-                    case_specific_info['case_url']})""", help="Click here to view the original file")
+                    case_specific_info['case_url']})""",
+                    help="Click here to view the original file")
     with col2:
         st.markdown(f"""**Verdict:** <span style='color: red;'><strong><u>{
                     case_specific_info['verdict']}</u></strong>""", unsafe_allow_html=True)
@@ -241,9 +245,10 @@ def format_case_presentation(conn: connection, title: str) -> str:
         f"""<u>Verdict summary:</u> {case_specific_info['verdict_summary']}""")
     st.html(f"""<u>Summary:</u> {case_specific_info["summary"]}""")
     display_claimants_and_defendants(case_specific_info['title'])
+    return ''
 
 
-def get_judge_chart_data_verdict(conn: connection):
+def get_judge_chart_data_verdict(cnx: connection):
     """
     Retrieves judge case data required for verdict chart
     """
@@ -255,13 +260,13 @@ def get_judge_chart_data_verdict(conn: connection):
             JOIN verdict as v ON v.verdict_id = cc.verdict_id
             GROUP BY v.verdict, j.judge_name;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def get_judge_chart_data_tag(conn: connection):
+def get_judge_chart_data_tag(cnx: connection):
     """
     Retrieves judge case data required for tag chart
     """
@@ -274,13 +279,13 @@ def get_judge_chart_data_tag(conn: connection):
             JOIN tag as t ON t.tag_id = ta.tag_id
             GROUP BY t.tag_name, j.judge_name;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def get_judge_data_court_type(conn: connection):
+def get_judge_data_court_type(cnx: connection):
     """
     Retrieves judge case data required for cases over time
     """
@@ -292,13 +297,13 @@ def get_judge_data_court_type(conn: connection):
             JOIN court as c ON c.court_id = cc.court_id
             GROUP BY c.court_name, j.judge_name;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def get_court_data_verdict(conn: connection):
+def get_court_data_verdict(cnx: connection):
     """
     Retrieves court_name data for verdicts
     """
@@ -309,13 +314,13 @@ def get_court_data_verdict(conn: connection):
             JOIN court as c ON c.court_id = cc.court_id
             GROUP BY v.verdict, c.court_name;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def get_court_data_tags(conn: connection):
+def get_court_data_tags(cnx: connection):
     """
     Retrieves court_name data for tags
     """
@@ -327,13 +332,13 @@ def get_court_data_tags(conn: connection):
             JOIN court as c ON c.court_id = cc.court_id
             GROUP BY t.tag_name, c.court_name;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def get_court_data_judges(conn: connection):
+def get_court_data_judges(cnx: connection):
     """
     Retrieves court_name data for judges
     """
@@ -345,13 +350,13 @@ def get_court_data_judges(conn: connection):
             JOIN court as c ON c.court_id = cc.court_id
             GROUP BY j.judge_name, c.court_name;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def get_tag_data_verdict(conn: connection):
+def get_tag_data_verdict(cnx: connection):
     """
     Retrieves tag data for verdicts
     """
@@ -363,13 +368,13 @@ def get_tag_data_verdict(conn: connection):
             JOIN tag as t ON t.tag_id = ta.tag_id
             GROUP BY v.verdict, t.tag_name;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def get_tag_data_judges(conn: connection):
+def get_tag_data_judges(cnx: connection):
     """
     Retrieves tag data for judges
     """
@@ -382,13 +387,13 @@ def get_tag_data_judges(conn: connection):
             JOIN tag as t ON t.tag_id = ta.tag_id
             GROUP BY j.judge_name, t.tag_name;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def get_cases_over_time(conn: connection):
+def get_cases_over_time(cnx: connection):
     """
     Retrieves cases over time
     """
@@ -398,13 +403,13 @@ def get_cases_over_time(conn: connection):
             GROUP BY month 
             ORDER BY month;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def filtered_cases_over_time_by_courts(conn: connection, filter: tuple):
+def filtered_cases_over_time_by_courts(cnx: connection, court_filter: tuple):
     """
     Retrieves cases over time but filters by courts
     """
@@ -418,13 +423,13 @@ def filtered_cases_over_time_by_courts(conn: connection, filter: tuple):
                 SELECT * FROM original_data
                 WHERE court_name IN %s;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
-        curs.execute(query, (tuple(filter),))
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
+        curs.execute(query, (tuple(court_filter),))
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def filtered_cases_over_time_by_judges(conn: connection, filter: tuple):
+def filtered_cases_over_time_by_judges(cnx: connection, judge_filter: tuple):
     """
     Retrieves cases over time but filters by judges
     """
@@ -439,13 +444,13 @@ def filtered_cases_over_time_by_judges(conn: connection, filter: tuple):
                 SELECT * FROM original_data
                 WHERE judge_name IN %s;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
-        curs.execute(query, (tuple(filter),))
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
+        curs.execute(query, (tuple(judge_filter),))
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def filtered_cases_over_time_by_tags(conn: connection, filter: tuple):
+def filtered_cases_over_time_by_tags(cnx: connection, tag_filter: tuple):
     """
     Retrieves cases over time but filters by tags
     """
@@ -460,51 +465,52 @@ def filtered_cases_over_time_by_tags(conn: connection, filter: tuple):
                 SELECT * FROM original_data
                 WHERE tag_name IN %s;
     """
-    with conn.cursor(cursor_factory=RealDictCursor) as curs:
-        curs.execute(query, (tuple(filter),))
+    with cnx.cursor(cursor_factory=RealDictCursor) as curs:
+        curs.execute(query, (tuple(tag_filter),))
         result = curs.fetchall()
     return pd.DataFrame(result)
 
 
-def plot_filter_pie(df: pd.DataFrame, selected_filter: str, filter: str, tab: str, name: str):
+def plot_filter_pie(df: pd.DataFrame, selected_filter: str, field: str, tab: str, name: str):
     """
-    Altair pie chart that displays the distribution of a field based on another (eg dist of verdict based on a given judge)
+    Altair pie chart that displays the distribution of a field based on another 
+    (eg dist of verdict based on a given judge)
     """
     filtered_data = df[df[tab] == selected_filter]
-    aggregated_data = filtered_data.groupby(filter).sum().reset_index()
+    aggregated_data = filtered_data.groupby(field).sum().reset_index()
     aggregated_data = aggregated_data.sort_values(
         'count', ascending=False).head(12)
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
         theta=alt.Theta(field='count', type='quantitative'),
-        color=alt.Color(field=filter, type='nominal', title=name),
-        tooltip=[filter, 'count']
+        color=alt.Color(field=field, type='nominal', title=name),
+        tooltip=[field, 'count']
     ).properties(width=500).mark_arc(outerRadius=100)
     return pie_chart
 
 
-def plot_pie(df: pd.DataFrame, filter: str, name: str):
+def plot_pie(df: pd.DataFrame, field: str, name: str):
     """
     Altair pie chart that displays the distribution of a filter (one of judge, tag or court type)
     """
-    colour = alt.Color(field=filter, type='nominal',
+    colour = alt.Color(field=field, type='nominal',
                        title=name).scale(scheme='paired')
     if name == 'Verdict':
-        domain = ['Guilty', 'Dismissed', 'Acquitted', 'Claimant Wins', 'Defendant Wins', 'Struck Out',
-                  'Appeal Dismissed', 'Appeal Allowed', 'Other']
-        range = ['#FF3131', '#e6e65e', '#006600 ', '#009900',
+        domain = ['Guilty', 'Dismissed', 'Acquitted', 'Claimant Wins', 'Defendant Wins',
+                  'Struck Out', 'Appeal Dismissed', 'Appeal Allowed', 'Other']
+        colour_range = ['#FF3131', '#e6e65e', '#006600 ', '#009900',
                  '#00CC00', '#ff6f00', '#ff000d', '#89CFF0', '#BF40BF']
 
-        colour = alt.Color(field=filter, type='nominal',
-                           title=name).scale(domain=domain, range=range)
+        colour = alt.Color(field=field, type='nominal',
+                           title=name).scale(domain=domain, range=colour_range)
 
-    aggregated_data = df.groupby(filter).sum().reset_index()
+    aggregated_data = df.groupby(field).sum().reset_index()
     aggregated_data = aggregated_data.sort_values(
         'count', ascending=False).head(12)
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
         theta=alt.Theta(field='count', type='quantitative',
                         title='Count').stack(True),
         color=colour,
-        tooltip=[filter, 'count'],
+        tooltip=[field, 'count'],
         # order=alt.Order('count', sort='descending')
     ).properties(
         title=f"{name} Distribution", width=500, height=400).mark_arc(outerRadius=130)
@@ -512,23 +518,25 @@ def plot_pie(df: pd.DataFrame, filter: str, name: str):
     return pie_chart
 
 
-def plot_filter_pie_tags(df: pd.DataFrame, selected_filter: list[str], filter: str, tab: str, name: str):
+def plot_filter_pie_tags(df: pd.DataFrame, selected_filter: list[str], field: str, tab: str,
+                         name: str):
     """
-    Altair pie chart that displays the distribution of tags based on either the judges, courts or verdict selected
+    Pie chart that displays the distribution of tags based on either the judges, courts or verdicts
     """
     filtered_data = df[df[tab].isin(selected_filter)]
-    aggregated_data = filtered_data.groupby(filter).sum().reset_index()
+    aggregated_data = filtered_data.groupby(field).sum().reset_index()
     aggregated_data = aggregated_data.sort_values(
         'count', ascending=False).head(12)
     pie_chart = alt.Chart(aggregated_data).mark_arc().encode(
         alt.Theta('count', type='quantitative', title='Tag Count'),
-        color=alt.Color(field=filter, type='nominal', title=name),
-        tooltip=[filter, 'count']
+        color=alt.Color(field=field, type='nominal', title=name),
+        tooltip=[field, 'count']
     ).properties(width=450, height=400).mark_arc(outerRadius=135)
     return pie_chart
 
 
 def plot_cases_over_months(df: pd.DataFrame):
+    """Plot of all the case count, when aggregated by month"""
     title = alt.TitleParams(
         'Cases Heard, Aggregated per Month', anchor='start')
     return alt.Chart(df.reset_index(), title=title).mark_bar().encode(
@@ -537,80 +545,63 @@ def plot_cases_over_months(df: pd.DataFrame):
         y=alt.Y('case_count', title='Case Count')).properties(width=450, height=400)
 
 
-def plot_cases_over_months_per_court(df: pd.DataFrame):
-    return alt.Chart(df.reset_index()).mark_line().encode(
-        x=alt.X('court_date:T', title='Case Date'),
-        y=alt.Y('overall_sum:Q', title='Case Count')).properties(title='Cases per court type over time').configure_title(anchor='middle')
-
-
-def multiple_courts(df: pd.DataFrame):
-    click = alt.selection_multi(encodings=['color'])
-
-    scatter = alt.Chart(df).mark_line().encode(
-        x='court_date:T',
-        y='case_count:Q',
-        color=alt.Color('court_name:N').scale(scheme='rainbow')).transform_filter(click)
-
-    hist = alt.Chart(df).mark_bar().encode(
-        x='count()',
-        y='court_name',
-        color=alt.condition(click, 'court_name', alt.value('viridis'))).add_selection(click)
-
-    return scatter & hist
-
-
-def draw_line(data, filter: str, filter_title: str):
+def draw_line(data:pd.DataFrame, field: str, filter_title: str):
+    """Graph with a singular line: field cumulative count vs time"""
     data.loc[:, 'overall_sum'] = data['case_count'].cumsum()
     return alt.Chart(data).mark_line(opacity=1, thickness=0.01).encode(
-        # axis=alt.Axis(format="%d/%m", title='Day/Hour')),
         x=alt.X('court_date:T', title='Date of the Case'),
         y=alt.Y('overall_sum:Q', title='Case Count'),
-        color=alt.Color(filter, title=filter_title.title()),
-        tooltip=[filter, 'overall_sum']
+        color=alt.Color(field, title=filter_title.title()),
+        tooltip=[field, 'overall_sum']
     )
 
 
-def select_filter(df: pd.DataFrame, filter: str, filter_title: str):
-    graph = list()
-    for i in set(df[filter]):
-        graph.append(draw_line(df[df[filter] == i], filter, filter_title))
-    return alt.layer(*graph).properties(title=f"""Cases for Selected {filter_title.title()}s, Over Time""")
+def select_filter(df: pd.DataFrame, field: str, filter_title: str):
+    """Function that groups different databases into one line chart, one per field selected"""
+    graph = []
+    for i in set(df[field]):
+        graph.append(draw_line(df[df[field] == i], field, filter_title))
+    return alt.layer(*graph).properties(
+        title=f"""Cases for Selected {filter_title.title()}s, Over Time""")
 
 
 def subscribe_to_court(courts: list):
+    """Allowing a SNS subscription to specific courts"""
     st.header("Subscribe to Notifications")
 
-    input = st.text_input("Enter your email to subscribe:")
-    email = re.search(r"[\w_.-]+@[\w_.-]+[.]+[\w]+", input)
+    email_input = st.text_input("Enter your email to subscribe:")
+    email = re.search(r"[\w_.-]+@[\w_.-]+[.]+[\w]+", email_input)
     st.markdown(
-        """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
+        """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""",
+        unsafe_allow_html=True)
     courts = st.multiselect(
         "Select a court", courts, label_visibility="hidden", placeholder='Choose courts to include')
     if st.button("Subscribe"):
         if email and courts:
             sns_client = get_sns_client()
             sub_to_topics(courts, sns_client, email.group())
-            st.success(f"Subscribed successfully!")
+            st.success("Subscribed successfully!")
         else:
             st.error("Please enter a valid email address and select a judge.")
 
 
 def tabs():
+    """Separating our content into tabs"""
     load_dotenv()
-    conn = get_connection()
+    cnx = get_connection()
     insights, filtered_insights, cases, subscribe = st.tabs(
         ["General Insights", "Filtered Insights", "Cases", "Subscribe"])
 
     with cases:
         # col1, col2, col3 = st.columns([1,8,1])
         # with col2:
-        available_cases = get_case_titles(conn)
+        available_cases = get_case_titles(cnx)
         st.markdown("<h4>Court Case Summary</h4>", unsafe_allow_html=True)
         selected_case = st.selectbox("Court case summary: ", sorted(available_cases),
                                      placeholder='Select a case to be displayed', index=None,
                                      label_visibility="hidden")
         if selected_case:
-            html = format_case_presentation(conn, selected_case)
+            html = format_case_presentation(cnx, selected_case)
             if html:
                 st.markdown(html, unsafe_allow_html=True)
 
@@ -618,52 +609,58 @@ def tabs():
         st.markdown('\n')
         with st.container():
             col1, col2, col3, col4, col5 = st.columns([0.5, 5, 5, 8, 0.5])
+            with col1:
+                pass
             with col2:
-                verdict_df = get_judge_chart_data_verdict(conn)
-
+                verdict_df = get_judge_chart_data_verdict(cnx)
                 st.write(plot_pie(verdict_df, 'verdict', 'Verdict'))
-                court_df = get_judge_data_court_type(conn)
+                court_df = get_judge_data_court_type(cnx)
                 st.write(plot_pie(court_df, 'court_name', 'Court'))
             with col3:
                 st.write('')
             with col4:
-                tag_df = get_judge_chart_data_tag(conn)
+                tag_df = get_judge_chart_data_tag(cnx)
                 st.write(plot_pie(tag_df, 'tag_name', 'Tag'))
-                case_count_df = get_cases_over_time(conn)
-                case_count_df = case_count_df.replace([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [
-                                                      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+                case_count_df = get_cases_over_time(cnx)
+                case_count_df = case_count_df.replace([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'])
                 st.altair_chart(plot_cases_over_months(case_count_df))
-
+            with col5:
+                pass
 
     with filtered_insights:
         col1, col2 = st.columns([0.4, 1])
         with col1:
-            st.write(
-                "<h5 style='padding-bottom: 6px; padding-top: 9px; padding-left: 10px'>Filter by:</h5>", unsafe_allow_html=True)
-            filter = st.radio(
-                "Filter by:", ["Judge", "Tag", "Court name"], horizontal=True, label_visibility='collapsed')
-            judges = get_judges(conn)
-            courts = get_courts(conn)
-            tags = get_tags(conn)
+            st.write("""<h5 style='padding-bottom: 6px; padding-top: 9px; padding-left: 10px'>
+                     Filter by:</h5>""",unsafe_allow_html=True)
+            filter_by = st.radio(
+                "Filter by:", ["Judge", "Tag", "Court name"], horizontal=True,
+                label_visibility='collapsed')
+            judges = get_judges(cnx)
+            courts = get_courts(cnx)
+            tags = get_tags(cnx)
 
         with col2:
-            if filter == "Judge":
+            if filter_by == "Judge":
                 selected_judge = st.selectbox(
                     "Select a judge to display graphs for", judges, label_visibility="visible")
-            if filter == "Court name":
+            if filter_by == "Court name":
                 selected_court = st.selectbox(
                     "Select a court to display graphs for", courts, label_visibility="visible")
-            if filter == "Tag":
+            if filter_by == "Tag":
                 st.markdown(
-                    """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
+                """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""",
+                    unsafe_allow_html=True)
                 selected_tags = st.multiselect(
-                    "Select at least a tag", tags, label_visibility="visible", placeholder='Choose tags to include', default='Patents')
+                    "Select at least a tag", tags, label_visibility="visible",
+                    placeholder='Choose tags to include', default='Patents')
         # st.subheader('')
-        if filter == "Judge":
+        if filter_by == "Judge":
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.5, 5, 0.1])
             with col2:
                 st.markdown(
-                    """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
+                """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""",
+                    unsafe_allow_html=True)
                 judge_choice = st.multiselect(
                     'Select judges to display', judges, default=[
                         selected_judge, "Lord Sales"])
@@ -671,78 +668,82 @@ def tabs():
             with col4:
                 st.markdown(f"""<h6>Verdict distribution for Judge {
                             selected_judge}</h6>""", unsafe_allow_html=True)
-                judge_verdict_df = get_judge_chart_data_verdict(conn)
+                judge_verdict_df = get_judge_chart_data_verdict(cnx)
                 st.write(plot_filter_pie(judge_verdict_df,
                                          selected_judge, 'verdict', 'judge_name', 'Verdict'))
             with col2:
                 if judge_choice:
                     st.altair_chart(select_filter(filtered_cases_over_time_by_judges(
-                        conn, (judge_choice)), 'judge_name', 'Judge'), use_container_width=True)
-            
+                        cnx, (judge_choice)), 'judge_name', 'Judge'), use_container_width=True)
+
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
             with col2:
                 st.markdown(f"""<h6>Tag distribution for Judge {
-                            selected_judge}</h6>""", unsafe_allow_html=True, help="Note - to make the graphs more useful, they only show the 12 most popular tags")
-                judge_tag_df = get_judge_chart_data_tag(conn)
+                            selected_judge}</h6>""", unsafe_allow_html=True,
+                help="Note - This is only showing the 12 most popular tags")
+                judge_tag_df = get_judge_chart_data_tag(cnx)
                 st.write(plot_filter_pie(judge_tag_df,
                                          selected_judge, 'tag_name', 'judge_name', 'Tag'))
             with col4:
                 st.markdown(f"""<h6>Court distribution for Judge {
                             selected_judge}</h6>""", unsafe_allow_html=True)
-                judge_court_df = get_judge_data_court_type(conn)
+                judge_court_df = get_judge_data_court_type(cnx)
                 st.write(plot_filter_pie(judge_court_df,
                                          selected_judge, 'court_name', 'judge_name', 'Court'))
 
-        if filter == "Court name":
+        if filter_by == "Court name":
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.5, 5, 0.1])
             with col2:
                 st.markdown(
-                    """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""", unsafe_allow_html=True)
-                all_choices = list(set(get_court_data_judges(conn)['court_name']))
+                """<style>span[data-baseweb="tag"] {background-color: black !important;}</style>""",
+                    unsafe_allow_html=True)
+                all_choices = list(set(get_court_data_judges(cnx)['court_name']))
                 court_choice = st.multiselect('Select courts to display', all_choices, default=[
-                                            "High Court (Queen's Bench Division)", "High Court (King's Bench Division)"])
+                    "High Court (Queen's Bench Division)", "High Court (King's Bench Division)"])
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.5, 5, 0.1])
             with col4:
                 st.markdown(f"""<h6>Verdict distribution for {
                             selected_court}</h6>""", unsafe_allow_html=True)
-                court_verdict_df = get_court_data_verdict(conn)
+                court_verdict_df = get_court_data_verdict(cnx)
                 st.write(plot_filter_pie(court_verdict_df,
                                          selected_court, 'verdict', 'court_name', 'Verdict'))
             with col2:
                 if court_choice:
                     st.altair_chart(select_filter(filtered_cases_over_time_by_courts(
-                        conn, (court_choice)), 'court_name', 'court'), use_container_width=True)
-                
+                        cnx, (court_choice)), 'court_name', 'court'), use_container_width=True)
+
             col1, col2, col3, col4, col5 = st.columns([0.1, 5, 0.1, 5, 0.1])
             with col2:
-                st.markdown(f"""<h6>Tag distribution for {
-                            selected_court}</h6>""", unsafe_allow_html=True, help="Note - to make the graphs more useful, they only show the 12 most popular tags")
-                court_tag_df = get_court_data_tags(conn)
+                st.markdown(
+                    f"""<h6>Tag distribution for {selected_court}</h6>""", unsafe_allow_html=True,
+                            help="Note - This is only showing the 12 most popular tags")
+                court_tag_df = get_court_data_tags(cnx)
                 st.write(plot_filter_pie(court_tag_df,
                                             selected_court, 'tag_name', 'court_name', 'Tag'))
             with col4:
-                st.markdown(f"""<h6>Judge distribution for {
-                            selected_court}</h6>""", unsafe_allow_html=True, help="Note - to make the graphs more useful, they only show the 12 most popular judges")
-                court_judge_df = get_court_data_judges(conn)
+                st.markdown(
+                    f"""<h6>Judge distribution for {selected_court}</h6>""", unsafe_allow_html=True,
+                    help="Note - This is only showing the 12 most popular judges")
+                court_judge_df = get_court_data_judges(cnx)
                 st.write(plot_filter_pie(court_judge_df,
                                          selected_court, 'judge_name', 'court_name', 'Judge'))
-            
 
-        if filter == "Tag":
+
+        if filter_by == "Tag":
             if selected_tags:
                 st.altair_chart(select_filter(filtered_cases_over_time_by_tags(
-                    conn, (selected_tags)), 'tag_name', 'tag'), use_container_width=True)
+                    cnx, (selected_tags)), 'tag_name', 'tag'), use_container_width=True)
                 col1, col2, col3 = st.columns([4, 3, 8])
                 with col1:
                     st.markdown('<h5>Grouped by verdict</h5>',
                                 unsafe_allow_html=True)
-                    tag_verdict_df = get_tag_data_verdict(conn)
-                    st.altair_chart(plot_filter_pie_tags(tag_verdict_df,
-                                                         selected_tags, 'verdict', 'tag_name', 'Verdict'))
+                    tag_verdict_df = get_tag_data_verdict(cnx)
+                    st.altair_chart(plot_filter_pie_tags(tag_verdict_df, selected_tags,
+                                                         'verdict', 'tag_name', 'Verdict'))
                 with col3:
-                    st.markdown('<h5>Grouped by judge</h5>',
-                                unsafe_allow_html=True, help="Note - to make the graphs more useful, they only show the 12 most popular judges")
-                    tag_judge_df = get_tag_data_judges(conn)
+                    st.markdown('<h5>Grouped by judge</h5>',unsafe_allow_html=True,
+                                help="Note - This is only showing the 12 most popular judges")
+                    tag_judge_df = get_tag_data_judges(cnx)
                     st.altair_chart(plot_filter_pie_tags(
                         tag_judge_df, selected_tags, 'judge_name', 'tag_name', 'Judge'))
 
@@ -751,16 +752,23 @@ def tabs():
 
 
 def display():
+    """Function to display our whole dashboard"""
     col0, col1, col2, col3 = st.columns([1, 3, 4, 2.5])
-    # with col1:
-    #     st.image("justicev4.png", width=150)
+    with col0:
+        pass
+    with col1:
+        pass
     with col2:
         st.markdown('<h1>Justice Lens</h1>', unsafe_allow_html=True)
     with col3:
         st.image("justicev4.png", width=150)
     col5, col6, col7 = st.columns([1, 9, 1])
+    with col5:
+        pass
     with col6:
         tabs()
+    with col7:
+        pass
 
 
 if __name__ == "__main__":
