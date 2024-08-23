@@ -97,13 +97,55 @@ The overall pipeline, is divided into two constituent parts, a live pipeline int
 
 
 ## 🛠️ Live Pipeline Setup Instructions
-If not done yet, install dependencies ([see](2. **Install Dependencies**: ) point 2 above)
-- run terraform file
-- set up s3 bucket and a file (in our case, if not change the glovbal variable)
-- have these env. vairables (linked to the s3 bucket above):
-ACCESS_KEY_ID"),
-        aws_secret_access_key=getenv("SECRET_ACCESS_KEY"
+0. **Install Dependencies**: 
+   Make sure you have Python and pip installed and the repository cloned. Run the following command to install the required dependencies:
+    ```sh
+    cd ~
+    cd court-transcripts-pipeline/pipeline
+    pip3 install -r requirements.txt
+    ```
 
+1. **Environment Variables**:
+    Add the following AWS credentials to your `.env` file created above:
+   
+    - `ACCESS_KEY_ID`
+    - `SECRET_ACCESS_KEY`
 
+2. **Run the terraform files to create all the resources needed.**
+    This can be done by navigating to the terraform directory with the following commands:
+    ```sh
+    cd ..
+    cd terraform/live_pipeline_tf
+    ```
+    Then individually run the following commands:
+    ```sh
+    terraform init
+    terraform plan #if you want to double-check what resources are being created
+    terraform apply #then 'yes' when prompted
+    ```
+    This will set up the required resources, including: s3 bucket, lambda (see the README.md in the `/terraform` for more details)
 
+3. **Create log file**
+    Once the resources are ready, you should initialise the file that will work like a cache by saving a list of all the citation ids of the files that have already been uploaded to the dashboard.
+    ```sh
+    cd ..
+    python3 initialise_json.py
+    ```
+
+4. **Run Batch Pipeline**: 
+   Once the setup steps are complete, the batch pipeline can now be run using the following command.
+   ```sh
+    python3 live_pipeline.py
+    ```
+
+## Running Tests
+
+To run the unit tests for the pipeline, use the following command:
+```sh
+pytest
+```
+Or to run individual ones, 
+```sh
+pytest <test_filename>
+```
 
