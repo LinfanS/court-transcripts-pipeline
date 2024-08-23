@@ -134,6 +134,17 @@ resource "aws_scheduler_schedule" "court_lambda_schedule" {
   depends_on = [aws_lambda_function.my_lambda_function, aws_iam_role.scheduler_lambda_role, aws_iam_role_policy.lambda_logging_policy]
 }
 
+resource "aws_s3_bucket" "c12-court-s3" {
+  bucket = "c12-court-transcripts"
+
+  force_destroy = true
+
+  tags = {
+    Name = "c12-court-transcripts"
+    Environment = "prod"
+  }
+}
+
 output "lambda_function_arn" {
   value = aws_lambda_function.my_lambda_function.arn
 }
