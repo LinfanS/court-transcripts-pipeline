@@ -117,7 +117,9 @@ The overall pipeline, is divided into two constituent parts, a live pipeline int
     cd ..
     cd terraform/live_pipeline_tf
     ```
-    Then individually run the following commands:
+    Then individually run the following commands
+    
+    NOTE - these will require environment variables - see the README.md in the `/terraform` for more details:
     ```sh
     terraform init
     terraform plan #if you want to double-check what resources are being created
