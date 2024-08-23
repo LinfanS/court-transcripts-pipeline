@@ -8,7 +8,7 @@
 &nbsp;
 
 
-## Project Description
+## :memo: Project Description
 
 The (UK) National Archives release transcripts of real court hearings every day in plain text on the [National Archives website](https://caselaw.nationalarchives.gov.uk/). Due to both the large quantity of court transcripts as well as as the complexity of a typical law case, this data is difficult to consume and understand for the average person. 
 
