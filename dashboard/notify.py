@@ -8,11 +8,8 @@ def get_sns_client():
     Returns an AWS SNS client.
     """
     return client("sns",
-
                   region_name="eu-west-2",
-
                   aws_access_key_id=getenv("ACCESS_KEY"),
-
                   aws_secret_access_key=getenv("SECRET_ACCESS_KEY"))
 
 
