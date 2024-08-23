@@ -25,7 +25,7 @@ DB_PASSWORD #your password
 
 ## Wireframe
 
-![alt text](image.png)
+![alt text](wireframe.png)
 
 ## Dashboard elements
 
