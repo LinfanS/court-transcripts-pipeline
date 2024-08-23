@@ -24,8 +24,6 @@ The overall pipeline, is divided into two constituent parts, a live pipeline int
 
 - `judge_matching.py`: Script for matching judges names to similar names e.g. with and without titles.
 
-- `judges_seed.py`: Script to seed the database with judge names data.
-
 - `live_pipeline.py`: Python script to run the live pipeline on AWS Lambda to add new court cases to the database.
 
 - `load.py`: Contains functions to load data into the database.
@@ -40,14 +38,12 @@ The overall pipeline, is divided into two constituent parts, a live pipeline int
 
 - `reset.sh`: Shell script to reset the database and rerun the schema.
 
-- `schema.sql`: SQL schema for the database.
-
 - `transform.py`: Script to transform the data extracted from the National Archives website through ChatGPT into a format that can be loaded into a database.
 
 
 
 
-## Batch Pipeline Setup Instructions
+## 🛠️ Batch Pipeline Setup Instructions
 
 0. **Prerequisite**: You must have a database setup first, see database folder for setup instructions.
 1. **Setup local Redis cache**: 
@@ -100,7 +96,7 @@ The overall pipeline, is divided into two constituent parts, a live pipeline int
     ```
 
 
-## Live Pipeline Setup Instructions
+## 🛠️ Live Pipeline Setup Instructions
 
 
 
