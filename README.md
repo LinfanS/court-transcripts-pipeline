@@ -54,7 +54,7 @@ Please see the respective folders for setup instructions regarding individual co
                                          /               \
                                         /                 \
                         +-------------------+         +-------------------+
-                        |   Live Pipeline    |         |  Batch Pipeline   |
+                        |   Live Pipeline   |         |  Batch Pipeline   |
                         +-------------------+         +-------------------+
                                         \                 /
                                          \               /
