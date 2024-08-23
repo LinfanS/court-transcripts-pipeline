@@ -105,7 +105,7 @@ def test_read_verdicts(mock_get_db):
 
 
 @patch("api.get_db")
-def test_read_court_cases():
+def test_read_court_cases(mock_get_db):
     with patch("api.execute_court_cases_query") as mock_execute:
 
         example_court_case = [
