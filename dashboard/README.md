@@ -2,7 +2,7 @@
 
 ## Viewing
 To view this dashboard, if not done so already, please make sure you have all the requirements installed. 
-This can be done by running `pip3 install -r requirements.txt` in the terminal; and is recommended to be done in a virtual environment.
+This can be done by running `pip3 install -r requirements.txt` in the terminal; and is recommended to be done in a virtual environment which can be created by running `python3 -m venv .venv` then `source .venv/bin/activate`.
 The dependencies include:
 ```python
 streamlit # framework used to create, interact with and display the dashboard
