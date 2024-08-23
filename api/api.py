@@ -5,7 +5,7 @@ from os import getenv
 from typing import List, Optional
 from datetime import date
 from fastapi import FastAPI, Depends, Query, status, Response, Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi import applications
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -55,7 +55,10 @@ def get_db():
         db.close()
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Justice Lens API",
+    description="""This is an API for Justice Lens containing the raw data pulled from a database storing the processed case transcript information. \n\nThis API lets you get this data as json objects by making tailored requests through the API parameters outlined below. \n\nFurther down is a full outline of the database tables that are being queried from the databse during these requests. \n\n [Justice Lens Dashboard](http://13.40.118.70:8501/)""",
+)
 app.openapi_version = "3.0.0"
 app.mount("/static", StaticFiles(directory="./static"), name="static")
 
@@ -334,23 +337,17 @@ def validate_query_params(params: dict, query_param_list: list) -> None:
         )
 
 
-@app.get("/")
-def get_api_overview() -> JSONResponse:
-    return JSONResponse(
-        {
-            "message": "Welcome to the Justice Lens API",
-            "endpoints": {
-                "/courts/": "read_courts",
-                "/judges/": "read_judges",
-                "/lawyers/": "read_lawyers",
-                "/law_firms/": "read_law_firms",
-                "/participants/": "read_participants",
-                "/tags/": "read_tags",
-                "/verdicts/": "read_verdicts",
-                "/court_cases/": "read_court_cases",
-            },
-            "limit": "This query parameter is on all endpoints except /verdicts/. Defaults to 100 matching cases, set to -1 for all matching cases",
-        }
+@app.get("/", include_in_schema=False)
+def redirect_to_docs() -> RedirectResponse:
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/docs", include_in_schema=False)
+def custom_swagger_ui_html_cdn():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=f"{app.title} - Swagger UI",
+        swagger_css_url="https://cdn.jsdelivr.net/gh/Itz-fork/Fastapi-Swagger-UI-Dark/assets/swagger_ui_dark.min.css",
     )
 
 
