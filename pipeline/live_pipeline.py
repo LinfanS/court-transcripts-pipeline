@@ -103,11 +103,12 @@ def handler(event: dict, context) -> None:
         for index, _ in enumerate(data):
             gpt_response.append(get_data(data, index))
         table_data = assemble_data(gpt_response)
-        send_emails(table_data, sns_client)
+        send_emails(table_data, log,  sns_client)
         conn = get_connection()
         insert_to_database(conn, table_data)
         log += [d.get("citation") for d in data]
-        logger.info("Page {page_num} inserted to database, {count} records in total")
+        logger.info(
+            "Page {page_num} inserted to database, {count} records in total")
 
     log_date, log = update_log_date_and_log(log_date, log)
     save_log_to_file(log_date, log)
