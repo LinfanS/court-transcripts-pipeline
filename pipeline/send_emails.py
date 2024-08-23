@@ -3,7 +3,10 @@ from os import getenv
 from dotenv import load_dotenv
 
 
-def get_sns_client():
+def get_sns_client() -> client:
+    """
+    Returns an AWS client used for SNS
+    """
     return client("sns",
 
                   region_name="eu-west-2",
@@ -39,13 +42,15 @@ def send_emails(table_data: dict[list], client) -> None:
         topic = arn_parts[-1]
         if topic in uploading_courts:
             court = topic.replace("-", " ")
+            court_name = court[11:]
             client.publish(TopicArn=topic_arn["TopicArn"],
                            Message=f"A new case has been uploaded from the {
-                court[11:]}",
+                court_name}",
                 Subject=f"New case(s) uploaded")
 
 
 if __name__ == "__main__":
+    load_dotenv()
     sns = get_sns_client()
     topic_names = rename_courts(
         ["High Court (Commercial Court)", 'High Court (Circuit Commercial Court)'])
