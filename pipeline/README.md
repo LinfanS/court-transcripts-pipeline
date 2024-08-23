@@ -97,7 +97,12 @@ The overall pipeline, is divided into two constituent parts, a live pipeline int
 
 
 ## 🛠️ Live Pipeline Setup Instructions
-
+If not done yet, install dependencies ([see](2. **Install Dependencies**: ) point 2 above)
+- run terraform file
+- set up s3 bucket and a file (in our case, if not change the glovbal variable)
+- have these env. vairables (linked to the s3 bucket above):
+ACCESS_KEY_ID"),
+        aws_secret_access_key=getenv("SECRET_ACCESS_KEY"
 
 
 
