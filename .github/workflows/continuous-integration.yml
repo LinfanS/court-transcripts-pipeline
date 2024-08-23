@@ -40,6 +40,10 @@ jobs:
         cd pipeline
         pip install -r requirements.txt
         pytest
+        cd ..
+        cd database
+        pip install -r requirements.txt
+        pytest
 
   lint:
     needs: test
@@ -64,6 +68,10 @@ jobs:
         pylint --fail-under=8 --ignore-patterns=test_\.\* ./*.py
         cd ..
         cd pipeline
+        pip install -r requirements.txt
+        pylint --fail-under=8 --ignore-patterns=test_\.\* ./*.py
+        cd ..
+        cd database
         pip install -r requirements.txt
         pylint --fail-under=8 --ignore-patterns=test_\.\* ./*.py
 
