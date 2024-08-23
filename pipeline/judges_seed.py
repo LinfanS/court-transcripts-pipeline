@@ -109,7 +109,7 @@ def get_district_judges_magistrates(url: str) -> list[str]:
     return [
         item.get_text()
         for index, item in enumerate(get_judge_rows(url))
-        if index % 3 == 0 and item.get_text() != "Judge"
+        if index % 3 == 0 and item.get_text() != "Judge" and item.get_text() != "Name"
     ]
 
 
@@ -131,7 +131,7 @@ def get_judge_advocates(url: str) -> list[str]:
     return [
         item.get_text()
         for index, item in enumerate(get_judge_rows(url))
-        if index % 2 == 0 and item.get_text() != "Judge"
+        if index % 2 == 0 and item.get_text() != "Judge" and item.get_text() != "Name" and item.get_text()[0].isalpha()
     ]
 
 
@@ -142,7 +142,7 @@ def get_circuit_district_judges(url: str) -> list[str]:
     rows = get_judge_rows(url)
     names = []
     for index, item in enumerate(rows):
-        if index % 3 == 0 and item.get_text() != "Judge":
+        if index % 3 == 0 and item.get_text() != "Judge" and item.get_text() != "Name":
             name = item.get_text()
             if not item.get_text()[-1].isalpha():
                 name = name[:-1]
@@ -217,12 +217,7 @@ def upload_judges(conn: connection, judges: list[tuple]) -> None:
     """
     Uploads all the judges names to the database
     """
-    query = """
-            INSERT INTO judge(judge_name)
-            VALUES %s
-            ON CONFLICT DO NOTHING
-            ;
-    """
+    query = """INSERT INTO judge(judge_name) VALUES %s ON CONFLICT DO NOTHING;"""
     with conn.cursor(cursor_factory=RealDictCursor) as curs:
         execute_values(curs, query, standardise_judge_names(judges))
         conn.commit()
