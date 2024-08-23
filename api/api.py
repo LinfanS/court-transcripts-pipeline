@@ -6,6 +6,9 @@ from typing import List, Optional
 from datetime import date
 from fastapi import FastAPI, Depends, Query, status, Response, Request, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi import applications
+from fastapi.staticfiles import StaticFiles
+from fastapi.openapi.docs import get_swagger_ui_html
 from sqlalchemy import (
     Boolean,
     Column,
@@ -54,6 +57,21 @@ def get_db():
 
 
 app = FastAPI()
+app.openapi_version = "3.0.0"
+app.mount("/static", StaticFiles(directory="./static"), name="static")
+
+
+def swagger_change_css(*args, **kwargs):
+    return get_swagger_ui_html(
+        *args,
+        **kwargs,
+        swagger_js_url="./static/swagger-ui/swagger-ui-bundle.js",
+        swagger_css_url="./static/swagger-ui/swagger-ui.css",
+    )
+
+
+applications.get_swagger_ui_html = swagger_change_css
+
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -303,6 +321,7 @@ def no_matches(response: Response, endpoint: str) -> JSONResponse:
 
 
 def validate_query_params(params: dict, query_param_list: list) -> None:
+    """Validates query parameters against a list of supported query parameters"""
     unsupported_params = [
         query_param
         for query_param in params.keys()
@@ -336,6 +355,18 @@ def get_api_overview() -> JSONResponse:
     )
 
 
+def execute_courts_query(search: Optional[str], limit: Optional[int], db: Session):
+    """Executes a query to get court names with optional search and limit parameters"""
+    query = db.query(Court)
+    if search is not None:
+        query = query.where(Court.court_name.ilike(f"%{search}%"))
+
+    if limit != -1:
+        query = query.limit(limit)
+
+    return query.all()
+
+
 @app.get("/courts/")
 def read_courts(
     response: Response,
@@ -352,17 +383,22 @@ def read_courts(
     query_param_list = ["search", "limit"]
     validate_query_params(params, query_param_list)
 
-    query = db.query(Court)
+    result = execute_courts_query(search, limit, db)
+    if not result:
+        return no_matches(response, "court names")
+    return result
+
+
+def execute_judges_query(search: Optional[str], limit: Optional[int], db: Session):
+    """Executes a query to get judge names with optional search and limit parameters"""
+    query = db.query(Judge)
     if search is not None:
-        query = query.where(Court.court_name.ilike(f"%{search}%"))
+        query = query.where(Judge.judge_name.ilike(f"%{search}%"))
 
     if limit != -1:
         query = query.limit(limit)
 
-    result = query.all()
-    if not result:
-        return no_matches(response, "court names")
-    return result
+    return query.all()
 
 
 @app.get("/judges/", response_model=List[JudgeModel])
@@ -380,18 +416,31 @@ def read_judges(
     query_param_list = ["search", "limit"]
     validate_query_params(params, query_param_list)
 
-    query = db.query(Judge)
-    if search is not None:
-        query = query.where(Judge.judge_name.ilike(f"%{search}%"))
-
-    if limit != -1:
-        query = query.limit(limit)
-
-    result = query.all()
+    result = execute_judges_query(search, limit, db)
     if not result:
         return no_matches(response, "judge names")
 
     return result
+
+
+def execute_lawyers_query(
+    lawyer: Optional[str], law_firm: Optional[str], limit: Optional[int], db: Session
+):
+    """Executes a query to get lawyer and law firm names with optional search and limit parameters"""
+    query = db.query(Lawyer).options(selectinload(Lawyer.law_firm))
+
+    if lawyer is not None:
+        query = query.where(Lawyer.lawyer_name.ilike(f"%{lawyer}%"))
+
+    if law_firm is not None:
+        query = query.join(Lawyer.law_firm).where(
+            LawFirm.law_firm_name.ilike(f"%{law_firm}%")
+        )
+
+    if limit != -1:
+        query = query.limit(limit)
+
+    return query.all()
 
 
 @app.get("/lawyers/", response_model=List[LawyerModel])
@@ -410,22 +459,21 @@ def read_lawyers(
     query_param_list = ["lawyer", "law_firm", "limit"]
     validate_query_params(params, query_param_list)
 
-    query = db.query(Lawyer).options(selectinload(Lawyer.law_firm))
+    result = execute_lawyers_query(lawyer, law_firm, limit, db)
+    if not result:
+        return no_matches(response, "lawyer names")
 
-    if lawyer is not None:
-        query = query.where(Lawyer.lawyer_name.ilike(f"%{lawyer}%"))
+    return result
 
-    if law_firm is not None:
-        query = query.join(Lawyer.law_firm).where(
-            LawFirm.law_firm_name.ilike(f"%{law_firm}%")
-        )
+
+def execute_law_firms_query(search: Optional[str], limit: Optional[int], db: Session):
+    """Executes a query to get law firm names with optional search and limit parameters"""
+    query = db.query(LawFirm)
+    if search is not None:
+        query = query.where(LawFirm.law_firm_name.ilike(f"%{search}%"))
 
     if limit != -1:
         query = query.limit(limit)
-
-    result = query.all()
-    if not result:
-        return no_matches(response, "lawyer names")
 
     return query.all()
 
@@ -445,40 +493,21 @@ def read_law_firms(
     query_param_list = ["search", "limit"]
     validate_query_params(params, query_param_list)
 
-    query = db.query(LawFirm)
-    if search is not None:
-        query = query.where(LawFirm.law_firm_name.ilike(f"%{search}%"))
-
-    if limit != -1:
-        query = query.limit(limit)
-
-    result = query.all()
+    result = execute_law_firms_query(search, limit, db)
     if not result:
         return no_matches(response, "law firm names")
 
     return result
 
 
-@app.get("/participants/", response_model=List[ParticipantAssignmentWithCourtCaseModel])
-def read_participants(
-    request: Request,
-    response: Response,
-    limit: Optional[int] = Query(
-        100, description="Limit the number of results, -1 for all, default 100 results"
-    ),
-    participant: Optional[str] = Query(
-        None, description="Participant name to filter by"
-    ),
-    lawyer: Optional[str] = Query(None, description="Lawyer name to filter by"),
-    law_firm: Optional[str] = Query(None, description="Law firm name to filter by"),
-    db: Session = Depends(get_db),
+def execute_participants_query(
+    participant: Optional[str],
+    lawyer: Optional[str],
+    law_firm: Optional[str],
+    limit: Optional[int],
+    db: Session,
 ):
-    """API endpoint to get participant names, lawyer and law firm with optional
-    search and limit parameters"""
-    params = request.query_params
-    query_param_list = ["participant", "lawyer", "law_firm", "limit"]
-    validate_query_params(params, query_param_list)
-
+    """Executes a query to get participant names, lawyer and law firm with optional search and limit parameters"""
     query = db.query(ParticipantAssignment).options(
         joinedload(ParticipantAssignment.participant),
         joinedload(ParticipantAssignment.lawyer).joinedload(Lawyer.law_firm),
@@ -504,10 +533,45 @@ def read_participants(
     if limit != -1:
         query = query.limit(limit)
 
-    result = query.all()
+    return query.all()
+
+
+@app.get("/participants/", response_model=List[ParticipantAssignmentWithCourtCaseModel])
+def read_participants(
+    request: Request,
+    response: Response,
+    limit: Optional[int] = Query(
+        100, description="Limit the number of results, -1 for all, default 100 results"
+    ),
+    participant: Optional[str] = Query(
+        None, description="Participant name to filter by"
+    ),
+    lawyer: Optional[str] = Query(None, description="Lawyer name to filter by"),
+    law_firm: Optional[str] = Query(None, description="Law firm name to filter by"),
+    db: Session = Depends(get_db),
+):
+    """API endpoint to get participant names, lawyer and law firm with optional
+    search and limit parameters"""
+    params = request.query_params
+    query_param_list = ["participant", "lawyer", "law_firm", "limit"]
+    validate_query_params(params, query_param_list)
+
+    result = execute_participants_query(participant, lawyer, law_firm, limit, db)
     if not result:
         return no_matches(response, "participants")
     return result
+
+
+def execute_tags_query(search: Optional[str], limit: Optional[int], db: Session):
+    """Executes a query to get tag names with optional search and limit parameters"""
+    query = db.query(Tag)
+    if search is not None:
+        query = query.where(Tag.tag_name.ilike(f"%{search}%"))
+
+    if limit != -1:
+        query = query.limit(limit)
+
+    return query.all()
 
 
 @app.get("/tags/", response_model=List[TagModel])
@@ -524,70 +588,43 @@ def read_tags(
     params = request.query_params
     query_param_list = ["search", "limit"]
     validate_query_params(params, query_param_list)
-    query = db.query(Tag)
-    if search is not None:
-        query = query.where(Tag.tag_name.ilike(f"%{search}%"))
 
-    if limit != -1:
-        query = query.limit(limit)
+    result = execute_tags_query(search, limit, db)
 
-    result = query.all()
     if not result:
         return no_matches(response, "tag names")
     return result
 
 
+def execute_verdicts_query(db: Session):
+    """Executes a query to get verdicts"""
+    query = db.query(Verdict)
+    return query.all()
+
+
 @app.get("/verdicts/", response_model=List[VerdictModel])
 def read_verdicts(db: Session = Depends(get_db)):
     """API endpoint to get verdicts"""
-    query = db.query(Verdict)
-    result = query.all()
+    result = execute_verdicts_query(db)
     return result
 
 
-@app.get("/court_cases/", response_model=List[CourtCaseModel])
-def read_court_cases(
-    request: Request,
-    response: Response,
-    tag: Optional[str] = Query(None, description="Tag name to filter by"),
-    judge: Optional[str] = Query(None, description="Judge name to filter by"),
-    participant: Optional[str] = Query(
-        None, description="Participant name to filter by"
-    ),
-    lawyer: Optional[str] = Query(None, description="Lawyer name to filter by"),
-    law_firm: Optional[str] = Query(None, description="Law firm name to filter by"),
-    title: Optional[str] = Query(None, description="Title to filter by"),
-    citation: Optional[str] = Query(None, description="Citation to filter by"),
-    verdict: Optional[str] = Query(None, description="Verdict to filter by"),
-    court: Optional[str] = Query(None, description="Court name to filter by"),
-    start_date: Optional[date] = Query(
-        None, description="Start date to filter by in the form YYYY-MM-DD"
-    ),
-    end_date: Optional[date] = Query(
-        None, description="End date to filter by in the form YYYY-MM-DD"
-    ),
-    limit: Optional[int] = Query(
-        100, description="Limit the number of results, -1 for all, default 100 results"
-    ),
-    db: Session = Depends(get_db),
+def execute_court_cases_query(
+    tag: Optional[str],
+    judge: Optional[str],
+    participant: Optional[str],
+    lawyer: Optional[str],
+    law_firm: Optional[str],
+    title: Optional[str],
+    citation: Optional[str],
+    verdict: Optional[str],
+    court: Optional[str],
+    start_date: Optional[date],
+    end_date: Optional[date],
+    limit: Optional[int],
+    db: Session,
 ):
-    """API endpoint to get all columns for a court case with optional search and limit parameters"""
-    params = request.query_params
-    query_param_list = [
-        "tag",
-        "judge",
-        "participant",
-        "lawyer",
-        "law_firm",
-        "title",
-        "citation",
-        "verdict",
-        "court",
-        "start_date",
-        "end_date",
-        "limit",
-    ]
-    validate_query_params(params, query_param_list)
+    """Executes a query to get all columns for a court case with optional search and limit parameters"""
     query = db.query(CourtCase).options(
         selectinload(CourtCase.tags),
         selectinload(CourtCase.judges),
@@ -650,7 +687,67 @@ def read_court_cases(
     if limit != -1:
         query = query.limit(limit)
 
-    result = query.all()
+    return query.all()
+
+
+@app.get("/court_cases/", response_model=List[CourtCaseModel])
+def read_court_cases(
+    request: Request,
+    response: Response,
+    tag: Optional[str] = Query(None, description="Tag name to filter by"),
+    judge: Optional[str] = Query(None, description="Judge name to filter by"),
+    participant: Optional[str] = Query(
+        None, description="Participant name to filter by"
+    ),
+    lawyer: Optional[str] = Query(None, description="Lawyer name to filter by"),
+    law_firm: Optional[str] = Query(None, description="Law firm name to filter by"),
+    title: Optional[str] = Query(None, description="Title to filter by"),
+    citation: Optional[str] = Query(None, description="Citation to filter by"),
+    verdict: Optional[str] = Query(None, description="Verdict to filter by"),
+    court: Optional[str] = Query(None, description="Court name to filter by"),
+    start_date: Optional[date] = Query(
+        None, description="Start date to filter by in the form YYYY-MM-DD"
+    ),
+    end_date: Optional[date] = Query(
+        None, description="End date to filter by in the form YYYY-MM-DD"
+    ),
+    limit: Optional[int] = Query(
+        100, description="Limit the number of results, -1 for all, default 100 results"
+    ),
+    db: Session = Depends(get_db),
+):
+    """API endpoint to get all columns for a court case with optional search and limit parameters"""
+    params = request.query_params
+    query_param_list = [
+        "tag",
+        "judge",
+        "participant",
+        "lawyer",
+        "law_firm",
+        "title",
+        "citation",
+        "verdict",
+        "court",
+        "start_date",
+        "end_date",
+        "limit",
+    ]
+    validate_query_params(params, query_param_list)
+    result = execute_court_cases_query(
+        tag,
+        judge,
+        participant,
+        lawyer,
+        law_firm,
+        title,
+        citation,
+        verdict,
+        court,
+        start_date,
+        end_date,
+        limit,
+        db,
+    )
     if not result:
         return no_matches(response, "court cases")
     return result
