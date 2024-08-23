@@ -70,7 +70,7 @@ Please see the respective folders for setup instructions regarding individual co
                         +-------------------+         +-----------------+
 
 
-### Basic Setup
+### Basic Setup Instructions
 
 The batch pipeline, live pipeline, dashboard, and API all require Python 3 and their own dependencies to function. Follow the steps below to set up the project:
 
