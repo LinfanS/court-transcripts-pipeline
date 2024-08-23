@@ -32,11 +32,16 @@ def rename_courts(courts: list[str]) -> list[str]:
     return topic_names
 
 
-def send_emails(table_data: dict[list], client) -> None:
+def send_emails(table_data: dict[list], log: list, client) -> None:
     """
     Sends emails to subscribers of the courts being uploaded
     """
-    uploading_courts = rename_courts(table_data["courts"])
+    courts = []
+    for index, citation in enumerate(table_data.get("citation")):
+        if citation not in log:
+            courts.append(table_data["courts"][index])
+
+    uploading_courts = rename_courts(courts)
     for topic_arn in client.list_topics()["Topics"]:
         arn_parts = topic_arn['TopicArn'].split(":")
         topic = arn_parts[-1]
