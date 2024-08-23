@@ -590,7 +590,6 @@ def subscribe_to_court(courts: list):
 
 def tabs():
     """Separating our content into tabs"""
-    load_dotenv()
     cnx = get_connection()
     insights, filtered_insights, cases, subscribe = st.tabs(
         ["General Insights", "Filtered Insights", "Cases", "Subscribe"])
