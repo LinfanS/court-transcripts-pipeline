@@ -38,6 +38,8 @@ The key deliverables of this project are summarised below:
 - `/terraform/`: Contains terraform files for cloud deployed deliverables to provision and manage the cloud infrastructure required for the project.
 
 - `/github/workflows/`: Contains GitHub Actions workflows.
+
+- `/images/`: Images required for README files.
   
 - `.gitignore`: Git ignore file to specify untracked files to ignore.
   
