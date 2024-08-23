@@ -21,21 +21,24 @@ from api import (
 client = TestClient(app)
 
 
-def test_read_courts_status_ok():
+@patch("api.get_db")
+def test_read_courts_status_ok(mock_get_db):
     with patch("api.execute_courts_query") as mock_execute:
         mock_execute.return_value = [{"court_name": "High Court"}]
         response = client.get("/courts")
         assert response.status_code == 200
 
 
-def test_read_courts_status_output():
+@patch("api.get_db")
+def test_read_courts_status_output(mock_get_db):
     with patch("api.execute_courts_query") as mock_execute:
         mock_execute.return_value = [{"court_name": "High Court"}]
         response = client.get("/courts")
         assert response.json() == [{"court_name": "High Court"}]
 
 
-def test_read_judges():
+@patch("api.get_db")
+def test_read_judges(mock_get_db):
     with patch("api.execute_judges_query") as mock_execute:
         mock_execute.return_value = [{"judge_name": "John Doe"}]
         response = client.get("/judges/")
@@ -43,7 +46,8 @@ def test_read_judges():
         assert response.json() == [{"judge_name": "John Doe"}]
 
 
-def test_read_lawyers():
+@patch("api.get_db")
+def test_read_lawyers(mock_get_db):
     with patch("api.execute_lawyers_query") as mock_execute:
         mock_execute.return_value = [
             {"lawyer_name": "Jane Doe", "law_firm": {"law_firm_name": "Doe Law Firm"}}
@@ -55,7 +59,8 @@ def test_read_lawyers():
         ]
 
 
-def test_read_law_firms():
+@patch("api.get_db")
+def test_read_law_firms(mock_get_db):
     with patch("api.execute_law_firms_query") as mock_execute:
         mock_execute.return_value = [{"law_firm_name": "Doe Law Firm"}]
         response = client.get("/law_firms/")
@@ -63,7 +68,8 @@ def test_read_law_firms():
         assert response.json() == [{"law_firm_name": "Doe Law Firm"}]
 
 
-def test_read_participants():
+@patch("api.get_db")
+def test_read_participants(mock_get_db):
     with patch("api.execute_participants_query") as mock_execute:
         example_participant = [
             {
@@ -80,7 +86,8 @@ def test_read_participants():
         assert response.json() == example_participant
 
 
-def test_read_tags():
+@patch("api.get_db")
+def test_read_tags(mock_get_db):
     with patch("api.execute_tags_query") as mock_execute:
         mock_execute.return_value = [{"tag_name": "Important"}]
         response = client.get("/tags/")
@@ -88,7 +95,8 @@ def test_read_tags():
         assert response.json() == [{"tag_name": "Important"}]
 
 
-def test_read_verdicts():
+@patch("api.get_db")
+def test_read_verdicts(mock_get_db):
     with patch("api.execute_verdicts_query") as mock_execute:
         mock_execute.return_value = [{"verdict": "Guilty"}]
         response = client.get("/verdicts/")
@@ -96,6 +104,7 @@ def test_read_verdicts():
         assert response.json() == [{"verdict": "Guilty"}]
 
 
+@patch("api.get_db")
 def test_read_court_cases():
     with patch("api.execute_court_cases_query") as mock_execute:
 
