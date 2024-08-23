@@ -10,7 +10,6 @@ import nltk
 from nltk.corpus import wordnet
 from Levenshtein import jaro_winkler
 from judge_matching import match_judge, get_judges
-from judges_seed import seed_judges
 
 
 def synonym_extractor(phrase: str) -> set[str]:
@@ -64,17 +63,6 @@ def get_connection() -> connection:
         database=environ["DB_NAME"],
         cursor_factory=RealDictCursor,
     )
-
-
-def reset_schema_and_seed(conn: connection):
-    """running schema to empty the tables (will need re-seeding for judges)"""
-    with open("schema.sql", "r", encoding="utf-8") as file:
-        code = file.read()
-        with conn.cursor() as cur:
-            cur.execute(code)
-        conn.commit()
-    seed_judges()
-    print("Schema reset and judges re-seeded")
 
 
 def return_single_ids(mapping: dict, to_convert: tuple[str]) -> tuple[int]:
