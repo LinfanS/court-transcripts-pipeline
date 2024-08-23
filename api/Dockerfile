@@ -7,6 +7,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY api.py .
+COPY static/ static/
 
 EXPOSE 80
 
