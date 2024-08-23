@@ -29,7 +29,7 @@ pip3 install -r requirements.txt
 python3 judges_seed.py
 ```
 
-## ERD Diagram
+## 📊 ERD Diagram
 
 ![alt text](../images/erd.png)
 
