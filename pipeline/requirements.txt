@@ -15,3 +15,4 @@ redis
 rich
 pytest
 pytest-cov
+boto3

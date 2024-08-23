@@ -16,7 +16,6 @@ from extract import get_listing_data
 
 load_dotenv()
 logger = logging.getLogger("pipeline")
-client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
 
 
 def shorten_text_by_tokens(
@@ -45,6 +44,7 @@ def shorten_text_by_tokens(
 
 def get_summary(prompt: str, transcript: str) -> ChatCompletion:
     """Collect data about the transcript using the GPT-4o-mini model"""
+    client = OpenAI(api_key=getenv("OPENAI_API_KEY"))
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -127,7 +127,7 @@ def get_data(html_data: list[dict], index: int) -> dict:
 
 def format_date(date_string: str) -> date:
     """Converts a date string to a date object"""
-    if not date_string:
+    if not date_string or not isinstance(date_string, str):
         return None
     clean_date_string = date_string.replace(", midnight", "")
     return datetime.strptime(clean_date_string, "%d %b %Y").date()
