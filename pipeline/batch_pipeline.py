@@ -39,16 +39,15 @@ def main() -> None:
     logger = initialise_logger()
     max_page_num = get_max_page_num(BATCH_URL)
     if max_page_num == 0:
-        message = "No new data to insert, exiting"
-        logger.info(message)
+        logger.info("No new data to insert, exiting")
         return None
 
-    count = 0
+    cases_count = 0
     with Progress() as progress:
         task = progress.add_task("[cyan]Processing batch data...", total=max_page_num)
         for page_num in range(1, max_page_num + 1):
             data = get_listing_data(BATCH_URL, page_num)
-            count += len(data)
+            cases_count += len(data)
             gpt_response = []
 
             for index, item in enumerate(data):
@@ -75,7 +74,9 @@ def main() -> None:
                 logger.info(message)
 
             insert_to_database(get_connection(), assemble_data(gpt_response, True))
-            message = f"Page {page_num} inserted to database, {count} records in total"
+            message = (
+                f"Page {page_num} inserted to database, {cases_count} records in total"
+            )
             logger.info(message)
             progress.update(task, advance=1)
 
