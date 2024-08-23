@@ -14,3 +14,15 @@ terraform plan
 terraform apply
 
 This initialises terraform, the plan oversees the changes you want to make and gives an overview before applying them, apply obviously then makes these changes reality.
+
+## Required variables
+Create a `terraform.tfvars` file with the following:
+    - `ACCESS_KEY_ID` : Your AWS Access Key credentials
+    - `SECRET_ACCESS_KEY` : Your AWS Access Key credentials
+    - `REGION` : Your AWS region
+    - `DB_HOST`: The hostname or IP address of the database server.
+    - `DB_PORT`: The port number on which the database server is listening; typically 5432 for PostgreSQL
+    - `DB_NAME`: The name of the database to connect to.
+    - `DB_USER`: The username to use for authenticating with the database.
+    - `DB_PASSWORD`: The password to use for authenticating with the database.
+    - `OPENAI_API_KEY`: API key for ChatGPT API.
