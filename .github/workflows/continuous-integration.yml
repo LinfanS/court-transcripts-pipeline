@@ -33,10 +33,6 @@ jobs:
         python -m venv .venv
         source .venv/bin/activate
         pip install --upgrade pip
-        cd pipeline
-        pip install -r requirements.txt
-        pytest
-        cd ..
         cd api
         pip install -r requirements.txt
         pytest
@@ -63,10 +59,6 @@ jobs:
         python -m venv .venv
         source .venv/bin/activate
         pip install --upgrade pip
-        cd pipeline
-        pip install -r requirements.txt
-        pylint --fail-under=8 --ignore-patterns=test_\.\* ./*.py
-        cd ..
         cd api
         pip install -r requirements.txt
         pylint --fail-under=8 --ignore-patterns=test_\.\* ./*.py
@@ -74,7 +66,6 @@ jobs:
         cd pipeline
         pip install -r requirements.txt
         pylint --fail-under=8 --ignore-patterns=test_\.\* ./*.py
-
 
 
 
