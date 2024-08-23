@@ -5,7 +5,10 @@ from os import getenv
 from typing import List, Optional
 from datetime import date
 from fastapi import FastAPI, Depends, Query, status, Response, Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi import applications
+from fastapi.staticfiles import StaticFiles
+from fastapi.openapi.docs import get_swagger_ui_html
 from sqlalchemy import (
     Boolean,
     Column,
@@ -17,28 +20,34 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     create_engine,
+    func,
 )
-from sqlalchemy.orm import relationship, sessionmaker, Session, joinedload, selectinload
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import (
+    relationship,
+    sessionmaker,
+    Session,
+    joinedload,
+    selectinload,
+    declarative_base,
+)
 from sqlalchemy.ext.hybrid import hybrid_property
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from dotenv import load_dotenv
 import uvicorn
-
-load_dotenv()
-DB_USER = getenv("DB_USER")
-DB_PASSWORD = getenv("DB_PASSWORD")
-DB_HOST = getenv("DB_HOST")
-DB_PORT = getenv("DB_PORT")
-DB_NAME = getenv("DB_NAME")
-
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-engine = create_engine(DATABASE_URL, echo=False)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db():
     """Initialises a new session for each request and close it after"""
+    load_dotenv()
+    DB_USER = getenv("DB_USER")
+    DB_PASSWORD = getenv("DB_PASSWORD")
+    DB_HOST = getenv("DB_HOST")
+    DB_PORT = getenv("DB_PORT")
+    DB_NAME = getenv("DB_NAME")
+
+    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    engine = create_engine(DATABASE_URL, echo=False)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
     try:
         yield db
@@ -46,7 +55,25 @@ def get_db():
         db.close()
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Justice Lens API",
+    description="""This is an API for Justice Lens containing the raw data pulled from a database storing the processed case transcript information. \n\nThis API lets you get this data as json objects by making tailored requests through the API parameters outlined below. \n\nFurther down is a full outline of the database tables that are being queried from the databse during these requests. \n\n [Justice Lens Dashboard](http://13.40.118.70:8501/)""",
+)
+app.openapi_version = "3.0.0"
+app.mount("/static", StaticFiles(directory="./static"), name="static")
+
+
+def swagger_change_css(*args, **kwargs):
+    return get_swagger_ui_html(
+        *args,
+        **kwargs,
+        swagger_js_url="./static/swagger-ui/swagger-ui-bundle.js",
+        swagger_css_url="./static/swagger-ui/swagger-ui.css",
+    )
+
+
+applications.get_swagger_ui_html = swagger_change_css
+
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -120,7 +147,7 @@ class CourtCase(Base):
     judges = relationship("Judge", secondary="judge_assignment")
     participants = relationship("Participant", secondary="participant_assignment")
     participant_assignments = relationship(
-        "ParticipantAssignment", back_populates="court_case"
+        "ParticipantAssignment", back_populates="court_case", overlaps="participants"
     )
 
 
@@ -147,9 +174,11 @@ class ParticipantAssignment(Base):
     )
     lawyer_id = Column(ForeignKey("lawyer.lawyer_id"))
     is_defendant = Column(Boolean)
-    court_case = relationship("CourtCase", back_populates="participant_assignments")
+    court_case = relationship(
+        "CourtCase", back_populates="participant_assignments", overlaps="participants"
+    )
     lawyer = relationship("Lawyer")
-    participant = relationship("Participant")
+    participant = relationship("Participant", overlaps="participants")
 
     @hybrid_property
     def participant_name(self):
@@ -199,8 +228,7 @@ class CourtModel(BaseModel):
 
     court_name: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class JudgeModel(BaseModel):
@@ -208,8 +236,7 @@ class JudgeModel(BaseModel):
 
     judge_name: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LawFirmModel(BaseModel):
@@ -217,8 +244,7 @@ class LawFirmModel(BaseModel):
 
     law_firm_name: Optional[str]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TagModel(BaseModel):
@@ -226,8 +252,7 @@ class TagModel(BaseModel):
 
     tag_name: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class VerdictModel(BaseModel):
@@ -235,8 +260,7 @@ class VerdictModel(BaseModel):
 
     verdict: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LawyerModel(BaseModel):
@@ -245,8 +269,7 @@ class LawyerModel(BaseModel):
     lawyer_name: Optional[str]
     law_firm: Optional[LawFirmModel]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ParticipantAssignmentModel(BaseModel):
@@ -257,8 +280,7 @@ class ParticipantAssignmentModel(BaseModel):
     lawyer_name: Optional[str]
     law_firm_name: Optional[str]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ParticipantAssignmentWithCourtCaseModel(BaseModel):
@@ -270,8 +292,7 @@ class ParticipantAssignmentWithCourtCaseModel(BaseModel):
     lawyer_name: Optional[str]
     law_firm_name: Optional[str]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourtCaseModel(BaseModel):
@@ -290,8 +311,7 @@ class CourtCaseModel(BaseModel):
     judges: List[JudgeModel]
     participant_assignments: List[ParticipantAssignmentModel]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 def no_matches(response: Response, endpoint: str) -> JSONResponse:
@@ -303,6 +323,7 @@ def no_matches(response: Response, endpoint: str) -> JSONResponse:
 
 
 def validate_query_params(params: dict, query_param_list: list) -> None:
+    """Validates query parameters against a list of supported query parameters"""
     unsupported_params = [
         query_param
         for query_param in params.keys()
@@ -316,24 +337,30 @@ def validate_query_params(params: dict, query_param_list: list) -> None:
         )
 
 
-@app.get("/")
-def get_api_overview() -> JSONResponse:
-    return JSONResponse(
-        {
-            "message": "Welcome to the Justice Lens API",
-            "endpoints": {
-                "/courts/": "read_courts",
-                "/judges/": "read_judges",
-                "/lawyers/": "read_lawyers",
-                "/law_firms/": "read_law_firms",
-                "/participants/": "read_participants",
-                "/tags/": "read_tags",
-                "/verdicts/": "read_verdicts",
-                "/court_cases/": "read_court_cases",
-            },
-            "limit": "This query parameter is on all endpoints except /verdicts/. Defaults to 100 matching cases, set to -1 for all matching cases",
-        }
+@app.get("/", include_in_schema=False)
+def redirect_to_docs() -> RedirectResponse:
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/docs", include_in_schema=False)
+def custom_swagger_ui_html_cdn():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=f"{app.title} - Swagger UI",
+        swagger_css_url="https://cdn.jsdelivr.net/gh/Itz-fork/Fastapi-Swagger-UI-Dark/assets/swagger_ui_dark.min.css",
     )
+
+
+def execute_courts_query(search: Optional[str], limit: Optional[int], db: Session):
+    """Executes a query to get court names with optional search and limit parameters"""
+    query = db.query(Court)
+    if search is not None:
+        query = query.where(Court.court_name.ilike(f"%{search}%"))
+
+    if limit != -1:
+        query = query.limit(limit)
+
+    return query.all()
 
 
 @app.get("/courts/")
@@ -352,17 +379,22 @@ def read_courts(
     query_param_list = ["search", "limit"]
     validate_query_params(params, query_param_list)
 
-    query = db.query(Court)
+    result = execute_courts_query(search, limit, db)
+    if not result:
+        return no_matches(response, "court names")
+    return result
+
+
+def execute_judges_query(search: Optional[str], limit: Optional[int], db: Session):
+    """Executes a query to get judge names with optional search and limit parameters"""
+    query = db.query(Judge)
     if search is not None:
-        query = query.where(Court.court_name.ilike(f"%{search}%"))
+        query = query.where(Judge.judge_name.ilike(f"%{search}%"))
 
     if limit != -1:
         query = query.limit(limit)
 
-    result = query.all()
-    if not result:
-        return no_matches(response, "court names")
-    return result
+    return query.all()
 
 
 @app.get("/judges/", response_model=List[JudgeModel])
@@ -380,18 +412,31 @@ def read_judges(
     query_param_list = ["search", "limit"]
     validate_query_params(params, query_param_list)
 
-    query = db.query(Judge)
-    if search is not None:
-        query = query.where(Judge.judge_name.ilike(f"%{search}%"))
-
-    if limit != -1:
-        query = query.limit(limit)
-
-    result = query.all()
+    result = execute_judges_query(search, limit, db)
     if not result:
         return no_matches(response, "judge names")
 
     return result
+
+
+def execute_lawyers_query(
+    lawyer: Optional[str], law_firm: Optional[str], limit: Optional[int], db: Session
+):
+    """Executes a query to get lawyer and law firm names with optional search and limit parameters"""
+    query = db.query(Lawyer).options(selectinload(Lawyer.law_firm))
+
+    if lawyer is not None:
+        query = query.where(Lawyer.lawyer_name.ilike(f"%{lawyer}%"))
+
+    if law_firm is not None:
+        query = query.join(Lawyer.law_firm).where(
+            LawFirm.law_firm_name.ilike(f"%{law_firm}%")
+        )
+
+    if limit != -1:
+        query = query.limit(limit)
+
+    return query.all()
 
 
 @app.get("/lawyers/", response_model=List[LawyerModel])
@@ -410,22 +455,21 @@ def read_lawyers(
     query_param_list = ["lawyer", "law_firm", "limit"]
     validate_query_params(params, query_param_list)
 
-    query = db.query(Lawyer).options(selectinload(Lawyer.law_firm))
+    result = execute_lawyers_query(lawyer, law_firm, limit, db)
+    if not result:
+        return no_matches(response, "lawyer names")
 
-    if lawyer is not None:
-        query = query.where(Lawyer.lawyer_name.ilike(f"%{lawyer}%"))
+    return result
 
-    if law_firm is not None:
-        query = query.join(Lawyer.law_firm).where(
-            LawFirm.law_firm_name.ilike(f"%{law_firm}%")
-        )
+
+def execute_law_firms_query(search: Optional[str], limit: Optional[int], db: Session):
+    """Executes a query to get law firm names with optional search and limit parameters"""
+    query = db.query(LawFirm)
+    if search is not None:
+        query = query.where(LawFirm.law_firm_name.ilike(f"%{search}%"))
 
     if limit != -1:
         query = query.limit(limit)
-
-    result = query.all()
-    if not result:
-        return no_matches(response, "lawyer names")
 
     return query.all()
 
@@ -445,40 +489,21 @@ def read_law_firms(
     query_param_list = ["search", "limit"]
     validate_query_params(params, query_param_list)
 
-    query = db.query(LawFirm)
-    if search is not None:
-        query = query.where(LawFirm.law_firm_name.ilike(f"%{search}%"))
-
-    if limit != -1:
-        query = query.limit(limit)
-
-    result = query.all()
+    result = execute_law_firms_query(search, limit, db)
     if not result:
         return no_matches(response, "law firm names")
 
     return result
 
 
-@app.get("/participants/", response_model=List[ParticipantAssignmentWithCourtCaseModel])
-def read_participants(
-    request: Request,
-    response: Response,
-    limit: Optional[int] = Query(
-        100, description="Limit the number of results, -1 for all, default 100 results"
-    ),
-    participant: Optional[str] = Query(
-        None, description="Participant name to filter by"
-    ),
-    lawyer: Optional[str] = Query(None, description="Lawyer name to filter by"),
-    law_firm: Optional[str] = Query(None, description="Law firm name to filter by"),
-    db: Session = Depends(get_db),
+def execute_participants_query(
+    participant: Optional[str],
+    lawyer: Optional[str],
+    law_firm: Optional[str],
+    limit: Optional[int],
+    db: Session,
 ):
-    """API endpoint to get participant names, lawyer and law firm with optional
-    search and limit parameters"""
-    params = request.query_params
-    query_param_list = ["participant", "lawyer", "law_firm", "limit"]
-    validate_query_params(params, query_param_list)
-
+    """Executes a query to get participant names, lawyer and law firm with optional search and limit parameters"""
     query = db.query(ParticipantAssignment).options(
         joinedload(ParticipantAssignment.participant),
         joinedload(ParticipantAssignment.lawyer).joinedload(Lawyer.law_firm),
@@ -504,10 +529,45 @@ def read_participants(
     if limit != -1:
         query = query.limit(limit)
 
-    result = query.all()
+    return query.all()
+
+
+@app.get("/participants/", response_model=List[ParticipantAssignmentWithCourtCaseModel])
+def read_participants(
+    request: Request,
+    response: Response,
+    limit: Optional[int] = Query(
+        100, description="Limit the number of results, -1 for all, default 100 results"
+    ),
+    participant: Optional[str] = Query(
+        None, description="Participant name to filter by"
+    ),
+    lawyer: Optional[str] = Query(None, description="Lawyer name to filter by"),
+    law_firm: Optional[str] = Query(None, description="Law firm name to filter by"),
+    db: Session = Depends(get_db),
+):
+    """API endpoint to get participant names, lawyer and law firm with optional
+    search and limit parameters"""
+    params = request.query_params
+    query_param_list = ["participant", "lawyer", "law_firm", "limit"]
+    validate_query_params(params, query_param_list)
+
+    result = execute_participants_query(participant, lawyer, law_firm, limit, db)
     if not result:
         return no_matches(response, "participants")
     return result
+
+
+def execute_tags_query(search: Optional[str], limit: Optional[int], db: Session):
+    """Executes a query to get tag names with optional search and limit parameters"""
+    query = db.query(Tag)
+    if search is not None:
+        query = query.where(Tag.tag_name.ilike(f"%{search}%"))
+
+    if limit != -1:
+        query = query.limit(limit)
+
+    return query.all()
 
 
 @app.get("/tags/", response_model=List[TagModel])
@@ -524,25 +584,106 @@ def read_tags(
     params = request.query_params
     query_param_list = ["search", "limit"]
     validate_query_params(params, query_param_list)
-    query = db.query(Tag)
-    if search is not None:
-        query = query.where(Tag.tag_name.ilike(f"%{search}%"))
 
-    if limit != -1:
-        query = query.limit(limit)
+    result = execute_tags_query(search, limit, db)
 
-    result = query.all()
     if not result:
         return no_matches(response, "tag names")
     return result
 
 
+def execute_verdicts_query(db: Session):
+    """Executes a query to get verdicts"""
+    query = db.query(Verdict)
+    return query.all()
+
+
 @app.get("/verdicts/", response_model=List[VerdictModel])
 def read_verdicts(db: Session = Depends(get_db)):
     """API endpoint to get verdicts"""
-    query = db.query(Verdict)
-    result = query.all()
+    result = execute_verdicts_query(db)
     return result
+
+
+def execute_court_cases_query(
+    tag: Optional[str],
+    judge: Optional[str],
+    participant: Optional[str],
+    lawyer: Optional[str],
+    law_firm: Optional[str],
+    title: Optional[str],
+    citation: Optional[str],
+    verdict: Optional[str],
+    court: Optional[str],
+    start_date: Optional[date],
+    end_date: Optional[date],
+    limit: Optional[int],
+    db: Session,
+):
+    """Executes a query to get all columns for a court case with optional search and limit parameters"""
+    query = db.query(CourtCase).options(
+        selectinload(CourtCase.tags),
+        selectinload(CourtCase.judges),
+        selectinload(CourtCase.participant_assignments).selectinload(
+            ParticipantAssignment.participant
+        ),
+        selectinload(CourtCase.participant_assignments)
+        .selectinload(ParticipantAssignment.lawyer)
+        .selectinload(Lawyer.law_firm),
+    )
+
+    if tag:
+        query = query.join(CourtCase.tags).where(Tag.tag_name.ilike(f"%{tag}%"))
+
+    if judge:
+        query = query.join(CourtCase.judges).where(Judge.judge_name.ilike(f"%{judge}%"))
+
+    if participant:
+        query = (
+            query.join(CourtCase.participant_assignments)
+            .join(ParticipantAssignment.participant)
+            .where(func.lower(Participant.participant_name) == participant.lower())
+        )
+
+    if lawyer:
+        query = (
+            query.join(CourtCase.participant_assignments)
+            .join(ParticipantAssignment.lawyer)
+            .where(Lawyer.lawyer_name.ilike(f"%{lawyer}%"))
+        )
+
+    if law_firm:
+        query = (
+            query.join(CourtCase.participant_assignments)
+            .join(ParticipantAssignment.lawyer)
+            .join(Lawyer.law_firm)
+            .where(LawFirm.law_firm_name.ilike(f"%{law_firm}%"))
+        )
+
+    if title:
+        query = query.where(CourtCase.title.ilike(f"%{title}%"))
+
+    if citation:
+        query = query.where(CourtCase.case_number.ilike(f"%{citation}%"))
+
+    if verdict:
+        query = query.join(CourtCase.verdict).where(
+            Verdict.verdict.ilike(f"%{verdict}%")
+        )
+
+    if court:
+        query = query.join(CourtCase.court).where(Court.court_name.ilike(f"%{court}%"))
+
+    if start_date:
+        query = query.where(CourtCase.court_date >= start_date)
+
+    if end_date:
+        query = query.where(CourtCase.court_date <= end_date)
+
+    if limit != -1:
+        query = query.limit(limit)
+
+    return query.all()
 
 
 @app.get("/court_cases/", response_model=List[CourtCaseModel])
@@ -588,69 +729,21 @@ def read_court_cases(
         "limit",
     ]
     validate_query_params(params, query_param_list)
-    query = db.query(CourtCase).options(
-        selectinload(CourtCase.tags),
-        selectinload(CourtCase.judges),
-        selectinload(CourtCase.participant_assignments).selectinload(
-            ParticipantAssignment.participant
-        ),
-        selectinload(CourtCase.participant_assignments)
-        .selectinload(ParticipantAssignment.lawyer)
-        .selectinload(Lawyer.law_firm),
+    result = execute_court_cases_query(
+        tag,
+        judge,
+        participant,
+        lawyer,
+        law_firm,
+        title,
+        citation,
+        verdict,
+        court,
+        start_date,
+        end_date,
+        limit,
+        db,
     )
-
-    if tag:
-        query = query.join(CourtCase.tags).where(Tag.tag_name.ilike(f"%{tag}%"))
-
-    if judge:
-        query = query.join(CourtCase.judges).where(Judge.judge_name.ilike(f"%{judge}%"))
-
-    if participant:
-        query = (
-            query.join(CourtCase.participant_assignments)
-            .join(ParticipantAssignment.participant)
-            .where(Participant.participant_name.lower() == participant.lower())
-        )
-
-    if lawyer:
-        query = (
-            query.join(CourtCase.participant_assignments)
-            .join(ParticipantAssignment.lawyer)
-            .where(Lawyer.lawyer_name.ilike(f"%{lawyer}%"))
-        )
-
-    if law_firm:
-        query = (
-            query.join(CourtCase.participant_assignments)
-            .join(ParticipantAssignment.lawyer)
-            .join(Lawyer.law_firm)
-            .where(LawFirm.law_firm_name.ilike(f"%{law_firm}%"))
-        )
-
-    if title:
-        query = query.where(CourtCase.title.ilike(f"%{title}%"))
-
-    if citation:
-        query = query.where(CourtCase.case_number.ilike(f"%{citation}%"))
-
-    if verdict:
-        query = query.join(CourtCase.verdict).where(
-            Verdict.verdict.ilike(f"%{verdict}%")
-        )
-
-    if court:
-        query = query.join(CourtCase.court).where(Court.court_name.ilike(f"%{court}%"))
-
-    if start_date:
-        query = query.where(CourtCase.court_date >= start_date)
-
-    if end_date:
-        query = query.where(CourtCase.court_date <= end_date)
-
-    if limit != -1:
-        query = query.limit(limit)
-
-    result = query.all()
     if not result:
         return no_matches(response, "court cases")
     return result
