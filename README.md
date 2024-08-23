@@ -97,7 +97,7 @@ source .venv/bin/activate
 ### Installing Dependencies
 Once the virtual environment is activated, install the required dependencies for each component using the requirements.txt file:
 
-```
+```sh
 pip3 install -r api/requirements.txt
 pip3 install -r pipeline/requirements.txt
 pip3 install -r dashboard/requirements.txt
