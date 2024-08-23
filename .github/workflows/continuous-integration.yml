@@ -36,6 +36,10 @@ jobs:
         cd api
         pip install -r requirements.txt
         pytest
+        cd ..
+        cd pipeline
+        pip install -r requirements.txt
+        pytest
 
   lint:
     needs: test
@@ -58,5 +62,11 @@ jobs:
         cd api
         pip install -r requirements.txt
         pylint --fail-under=8 --ignore-patterns=test_\.\* ./*.py
+        cd..
+        cd pipeline
+        pip install -r requirements.txt
+        pylint --fail-under=8 --ignore-patterns=test_\.\* ./*.py
+
+
 
   
