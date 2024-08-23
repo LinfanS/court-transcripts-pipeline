@@ -4,3 +4,5 @@ pydantic
 uvicorn
 python-dotenv
 psycopg2-binary
+pytest
+pylint
